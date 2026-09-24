@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'motion/react'
 
 type Card = { word: string; phonetic: string; meaning: string; sentence: string; translation: string; category: string; image?: string }
 const cards: Card[] = [
@@ -30,6 +30,18 @@ const speedNumber = (value: number) => value === 1.25 ? '1.25' : value.toFixed(1
 const speedLabel = (value: number) => `${speedNumber(value)}x`
 // Keep this query in sync with the split-layout rules in styles.css.
 const splitLayoutQuery = '(min-width: 900px), (min-width: 640px) and (max-height: 600px)'
+const imagePreloads = new Map<string, { image: HTMLImageElement; ready: Promise<void>; decoded: boolean }>()
+const preloadImage = (src?: string) => {
+  if (!src) return Promise.resolve()
+  const cached = imagePreloads.get(src)
+  if (cached) return cached.ready
+  const image = new Image()
+  image.src = src
+  const entry = { image, ready: Promise.resolve(), decoded: false }
+  entry.ready = image.decode().then(() => { entry.decoded = true }).catch(() => undefined)
+  imagePreloads.set(src, entry)
+  return entry.ready
+}
 
 export default function App() {
   const [category, setCategory] = useState('基础词汇')
@@ -46,6 +58,7 @@ export default function App() {
   const [paused, setPaused] = useState(false)
   const [speakingWord, setSpeakingWord] = useState(false)
   const activeSpeech = useRef<SpeechSynthesisUtterance | null>(null)
+  const navigationRequest = useRef(0)
   const cardScrollRef = useRef<HTMLDivElement | null>(null)
   const illustrationSlotRef = useRef<HTMLDivElement | null>(null)
   const reduceMotion = useReducedMotion()
@@ -64,6 +77,9 @@ export default function App() {
   }, [])
   useEffect(() => { localStorage.setItem('word-atlas-saved', JSON.stringify(saved)) }, [saved])
   useEffect(() => { if (index >= visibleCards.length) setIndex(Math.max(0, visibleCards.length - 1)) }, [index, visibleCards.length])
+  useEffect(() => {
+    for (const nearby of [index, index - 1, index + 1, index + 2]) void preloadImage(visibleCards[nearby]?.image)
+  }, [index, category, view, saved])
   useLayoutEffect(() => {
     const scroll = cardScrollRef.current
     if (!scroll) return
@@ -128,19 +144,33 @@ export default function App() {
       const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scroll.clientHeight : 1)
       if (consumeScroll(delta)) event.preventDefault()
     }
+    let startTouchX = 0
+    let startTouchY = 0
+    let touchAxis: 'horizontal' | 'vertical' | null = null
     let lastTouchY = 0
     let lastTouchTime = 0
     let velocity = 0
     let managedTouch = false
     const onTouchStart = (event: TouchEvent) => {
       stopMomentum()
+      startTouchX = event.touches[0]?.clientX ?? 0
+      startTouchY = event.touches[0]?.clientY ?? 0
+      touchAxis = null
       lastTouchY = event.touches[0]?.clientY ?? 0
       lastTouchTime = performance.now()
       velocity = 0
       managedTouch = false
     }
     const onTouchMove = (event: TouchEvent) => {
-      const y = event.touches[0]?.clientY ?? lastTouchY
+      const touch = event.touches[0]
+      const y = touch?.clientY ?? lastTouchY
+      if (!touchAxis) {
+        const dx = Math.abs((touch?.clientX ?? startTouchX) - startTouchX)
+        const dy = Math.abs(y - startTouchY)
+        if (Math.max(dx, dy) > 8) touchAxis = dx > dy * 1.15 ? 'horizontal' : 'vertical'
+      }
+      if (!touchAxis) return
+      if (touchAxis === 'horizontal') return
       const now = performance.now()
       const delta = lastTouchY - y
       if (consumeScroll(delta, managedTouch)) {
@@ -152,7 +182,7 @@ export default function App() {
       lastTouchTime = now
     }
     const onTouchEnd = () => {
-      if (!managedTouch || reduceMotion || performance.now() - lastTouchTime > 80 || Math.abs(velocity) < 0.05) return
+      if (touchAxis === 'horizontal' || !managedTouch || reduceMotion || performance.now() - lastTouchTime > 80 || Math.abs(velocity) < 0.05) return
       let previousFrame = 0
       const startedAt = performance.now()
       const coast = (now: number) => {
@@ -228,7 +258,7 @@ export default function App() {
       setPlaying(false)
       setPaused(false)
       setSpeakingWord(false)
-      if (sentence && autoAdvance) { setDirection(1); setIndex(i => Math.min(i + 1, visibleCards.length - 1)) }
+      if (sentence && autoAdvance && index < visibleCards.length - 1) goTo(index + 1)
     }
     speech.onerror = () => {
       if (activeSpeech.current !== speech) return
@@ -247,12 +277,32 @@ export default function App() {
       setPaused(!paused)
     } else speak(card.word)
   }
-  const chooseCategory = (value: string) => { stopAudio(); setCategory(value); setView('atlas'); setIndex(0); setMenu(null) }
-  const openSavedList = () => { stopAudio(); setAtlasIndex(index); setView('saved-list'); setMenu(null) }
-  const openSavedDetail = (word: string) => { stopAudio(); setIndex(savedCards.findIndex(card => card.word === word)); setDirection(1); setView('saved-detail'); setMenu(null) }
-  const backToSavedList = () => { stopAudio(); setView('saved-list'); setMenu(null) }
-  const backToAtlas = () => { stopAudio(); setView('atlas'); setIndex(atlasIndex); setMenu(null) }
-  const goTo = (value: number) => { stopAudio(); setDirection(value > index ? 1 : -1); setIndex(value); setMenu(null) }
+  const chooseCategory = (value: string) => { navigationRequest.current++; stopAudio(); setCategory(value); setView('atlas'); setIndex(0); setMenu(null) }
+  const openSavedList = () => { navigationRequest.current++; stopAudio(); setAtlasIndex(index); setView('saved-list'); setMenu(null) }
+  const openSavedDetail = (word: string) => { navigationRequest.current++; stopAudio(); setIndex(savedCards.findIndex(card => card.word === word)); setDirection(1); setView('saved-detail'); setMenu(null) }
+  const backToSavedList = () => { navigationRequest.current++; stopAudio(); setView('saved-list'); setMenu(null) }
+  const backToAtlas = () => { navigationRequest.current++; stopAudio(); setView('atlas'); setIndex(atlasIndex); setMenu(null) }
+  const goTo = (value: number) => {
+    const target = visibleCards[value]
+    if (!target) return
+    const request = ++navigationRequest.current
+    stopAudio()
+    setMenu(null)
+    const complete = () => {
+      if (request !== navigationRequest.current) return
+      setDirection(value > index ? 1 : -1)
+      setIndex(value)
+    }
+    if (!target.image || imagePreloads.get(target.image)?.decoded) complete()
+    else void preloadImage(target.image).then(complete)
+  }
+  const onCardDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const distance = info.offset.x
+    const velocity = info.velocity.x
+    if (Math.abs(distance) < 65 && Math.abs(velocity) < 450) return
+    const swipe = Math.abs(distance) >= 24 ? distance : velocity
+    goTo(index + (swipe < 0 ? 1 : -1))
+  }
   const toggleSaved = () => {
     if (!card) return
     if (view === 'saved-detail' && saved.includes(card.word)) backToSavedList()
@@ -274,8 +324,8 @@ export default function App() {
       {view === 'saved-detail' && <header className="subpage-header"><button className="subpage-back subpage-back-label" onClick={backToSavedList} aria-label={t('返回收藏夹', 'Back to saved words')}><ChevronLeft size={22}/><span>{t('收藏夹', 'Saved words')}</span></button><span className="subpage-context">{t('单词详情', 'Word card')}</span></header>}
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
-        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${side * 100}%)`, opacity: 0 }), center: { transform: 'translateX(0)', opacity: 1 }, exit: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${-side * 100}%)`, opacity: 0 })}} transition={{ duration: reduceMotion ? 0.01 : 0.28, ease: [0.22, 1, 0.36, 1] }}>
-          <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="async" /> : <div className="missing-image">{card.word}</div>}</div></div>
+        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} drag={visibleCards.length > 1 ? 'x' : false} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.18} dragMomentum={false} dragTransition={{ bounceStiffness: 340, bounceDamping: 32 }} onDragEnd={onCardDragEnd}>
+          <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="sync" draggable={false} /> : <div className="missing-image">{card.word}</div>}</div></div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
