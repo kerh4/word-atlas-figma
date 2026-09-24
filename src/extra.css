@@ -3,8 +3,6 @@
 .empty-state h2{font-size:18px;color:#242424;margin:4px 0 0}
 .empty-state p{font-size:14px;margin:0}
 .is-playing{box-shadow:0 0 0 5px #287f7033}
-.mini-island{position:relative;overflow:hidden;border:0}
-.mini-island img{position:absolute;width:136px;height:59px;max-width:none;left:-34.2px;top:-15.4px}
 @media(max-width:480px){
   .phone{min-height:0}
   .content{overflow-y:auto;min-height:0}

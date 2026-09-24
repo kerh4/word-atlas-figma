@@ -49,8 +49,6 @@ export default function App() {
   const goTo = (value: number) => { stopAudio(); setIndex(value); setMenu(null) }
   const toggleSaved = () => { if (card) setSaved(current => current.includes(card.word) ? current.filter(value => value !== card.word) : [...current, card.word]) }
   return <main className="page-shell"><section className="phone" aria-label={t('单词图鉴', 'Word Atlas')}>
-    <header className="status"><b>9:41</b><span className="status-icons" aria-hidden="true">▮▮▮　⌁　▰</span></header>
-    <nav className="nav"><button className="circle-action" aria-label={t('返回', 'Back')} onClick={() => { setSavedView(false); setIndex(0); setMenu(null) }}><ChevronLeft size={20} /></button><h1>{t('单词图鉴', 'Word Atlas')}</h1><div className="mini-island" aria-hidden="true"><img src="/assets/figma-raw-1.png" alt="" /></div></nav>
     <div className="content">
       <div className="category-row"><div className="popover-anchor"><button className="category-btn" aria-expanded={menu === 'category'} onClick={() => setMenu(menu === 'category' ? null : 'category')}>{savedView ? t('收藏夹', 'Saved') : categoryLabel(category)} <ChevronDown size={16}/></button>{menu === 'category' && <div className="menu category-menu">{categories.map(([zh, en]) => <button key={zh} onClick={() => chooseCategory(zh)}>{hideChinese ? en : zh}</button>)}</div>}</div><button className="favourites" onClick={() => { stopAudio(); setSavedView(true); setIndex(0); setMenu(null) }}><Bookmark size={16} fill="currentColor"/> {t('收藏夹', 'Saved')} {saved.length} <ChevronRight size={13}/></button></div>
       {card ? <>
