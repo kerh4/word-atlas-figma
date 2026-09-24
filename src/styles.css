@@ -11,11 +11,18 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .page-shell{min-height:100dvh;background:#fff;position:relative}
 .phone{width:100%;height:100dvh;min-height:0;background:#fff;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .content{--content-inset:20px;width:100%;max-width:1120px;margin-inline:auto;flex:1;min-height:0;padding:8px var(--content-inset) 24px;display:flex;flex-direction:column;overflow:hidden}
-.content--study{--study-controls-depth:146px;--study-bottom-padding:24px;position:relative;isolation:isolate}
-.content--study>.card-scroll{position:relative;z-index:0;margin-bottom:calc(-1 * var(--study-controls-depth));padding-bottom:calc(var(--study-controls-depth) + 12px)}
-.content--study::after{content:"";position:absolute;z-index:1;pointer-events:none;left:var(--content-inset);right:var(--content-inset);bottom:var(--study-bottom-padding);height:calc(var(--study-controls-depth) - 20px);background:rgba(255,255,255,.58);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);-webkit-mask-image:linear-gradient(to bottom,transparent,#000 16px);mask-image:linear-gradient(to bottom,transparent,#000 16px)}
-.content--study.content--transitioning>.card-scroll{z-index:1}
-.content--study.content--transitioning::after{opacity:0}
+.content--study{--study-controls-depth:146px;--study-header-depth:44px;--study-glass-fill:rgba(255,255,255,.7);--study-glass-blur:20px;--study-bottom-padding:24px;position:relative;isolation:isolate}
+.content--study>.card-scroll{position:relative;z-index:0;margin-top:calc(-1 * var(--study-header-depth));padding-top:var(--study-header-depth);margin-bottom:calc(-1 * var(--study-controls-depth));padding-bottom:calc(var(--study-controls-depth) + 12px)}
+/* The bottom glass spans the full reading pane. Its upper edge fades in before
+   the controls, so text transitions into the white blur without a hard seam. */
+.study-backdrop{position:absolute;z-index:1;pointer-events:none;left:0;right:0;bottom:var(--study-bottom-padding);height:calc(var(--study-controls-depth) + 24px);background:var(--study-glass-fill);-webkit-backdrop-filter:blur(var(--study-glass-blur));backdrop-filter:blur(var(--study-glass-blur));-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 32px);mask-image:linear-gradient(to bottom,transparent 0,#000 32px)}
+/* The header stays above the scroll pane; its glass samples content passing
+   below and fades out over the next 32px instead of ending on a hard line. */
+.content--study>.category-row,.content--study>.subpage-header{position:relative;z-index:3}
+.content--study>.category-row::before,.content--study>.subpage-header::before{content:"";position:absolute;z-index:-1;pointer-events:none;top:-48px;left:calc(-1 * var(--content-inset));right:calc(-1 * var(--content-inset));bottom:-32px;background:var(--study-glass-fill);-webkit-backdrop-filter:blur(var(--study-glass-blur));backdrop-filter:blur(var(--study-glass-blur));-webkit-mask-image:linear-gradient(to bottom,#000 0,#000 calc(100% - 32px),transparent 100%);mask-image:linear-gradient(to bottom,#000 0,#000 calc(100% - 32px),transparent 100%)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  .content--study{--study-glass-fill:rgba(255,255,255,.94)}
+}
 .category-row{height:44px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
 .category-btn,.favourites,.toolbar button{border:0;background:transparent;color:#242424;font-family:inherit;font-size:14px;font-weight:500;line-height:1.2;display:flex;align-items:center;gap:4px;cursor:pointer}
 .category-btn{font-size:16px;font-weight:600;padding:11px 8px 11px 0;min-height:44px;gap:8px}
@@ -115,9 +122,9 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
    Short landscape phones also get a compact split layout instead of a tiny strip. */
 @media(min-width:900px),(min-width:640px) and (max-height:600px){
   .content{--content-inset:40px;padding-top:24px;padding-bottom:32px}
-  .content--study{--study-footer-height:148px;--study-footer-gap:24px;--study-bottom-padding:32px;--study-illustration-extra:185px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) 48px 52px;column-gap:48px;row-gap:24px}
-  .content--study>.category-row,.content--study>.subpage-header{grid-column:1 / -1}
-  .content--study>.card-scroll{grid-column:1 / -1;grid-row:2 / -1;z-index:0;margin-bottom:0;padding-bottom:0;overflow-y:auto;overflow-x:hidden;container-type:size;-webkit-overflow-scrolling:touch}
+  .content--study{--study-header-depth:68px;--study-footer-height:148px;--study-footer-gap:24px;--study-bottom-padding:32px;--study-illustration-extra:185px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) 48px 52px;column-gap:48px;row-gap:24px}
+  .content--study>.category-row,.content--study>.subpage-header{grid-column:1 / -1;grid-row:1}
+  .content--study>.card-scroll{grid-column:1 / -1;grid-row:1 / -1;z-index:0;margin-top:0;margin-bottom:0;padding-bottom:0;overflow-y:auto;overflow-x:hidden;container-type:size;-webkit-overflow-scrolling:touch}
   .card-stage{min-height:100%;height:auto;margin-top:0;flex:0 0 auto;overflow:visible;padding-bottom:var(--study-footer-height)}
   .card-body{min-height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:48px}
   .illustration-slot{position:sticky;top:0;align-self:start;height:calc(100cqh - var(--study-footer-height));max-width:none;min-width:0;margin:0;overflow:visible;container-type:size;display:grid;place-items:start center}
@@ -126,7 +133,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .word-row{height:auto;min-height:80px;padding-inline-end:4px;gap:16px}
   .word-row h2{overflow-wrap:anywhere}
   .spacer{display:none}
-  .content--study::after{left:calc(50% + 0.5 * var(--study-footer-gap));right:var(--content-inset);height:calc(var(--study-footer-height) - var(--study-footer-gap))}
+  .study-backdrop{left:calc(50% + 0.5 * var(--study-footer-gap) - 24px);right:0;height:calc(var(--study-footer-height) - var(--study-footer-gap) + 44px)}
   .toolbar,.pager{grid-column:2;z-index:2}
   .toolbar{grid-row:3}
   .pager{grid-row:4}
@@ -137,12 +144,16 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 }
 @media(max-width:599px){
   .content{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
-  .content--study{--study-bottom-padding:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
+  .content--study{--mobile-nav-top:max(16px,env(safe-area-inset-top));--study-header-depth:calc(60px + var(--mobile-nav-top));--study-bottom-padding:max(24px,calc(env(safe-area-inset-bottom) + 8px));padding-top:0}
   .content--atlas{padding-top:max(16px,env(safe-area-inset-top))}
+  .content--study.content--atlas{padding-top:0}
+  .content--study>.category-row,.content--study>.subpage-header{height:var(--study-header-depth);padding-top:var(--mobile-nav-top);padding-bottom:16px}
+  .content--study>.category-row::before,.content--study>.subpage-header::before{top:0}
+  .content--study .card-stage{margin-top:0}
 }
 @media(min-width:640px) and (max-height:600px){
   .content{--content-inset:24px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
-  .content--study{--study-footer-height:116px;--study-footer-gap:12px;--study-bottom-padding:max(12px,env(safe-area-inset-bottom));--study-illustration-extra:145px;column-gap:24px;row-gap:12px;grid-template-rows:44px minmax(0,1fr) 48px 44px}
+  .content--study{--study-header-depth:56px;--study-footer-height:116px;--study-footer-gap:12px;--study-bottom-padding:max(12px,env(safe-area-inset-bottom));--study-illustration-extra:145px;column-gap:24px;row-gap:12px;grid-template-rows:44px minmax(0,1fr) 48px 44px}
   .card-body{column-gap:24px}
   .play{width:48px;height:48px}
   .pager,.pager button{height:44px}
@@ -153,7 +164,4 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 }
 @media(max-width:360px){
   .pager button{font-size:14px;padding:0 2px}
-}
-@media(prefers-reduced-motion:reduce){
-  .content--study::after{transition:none}
 }

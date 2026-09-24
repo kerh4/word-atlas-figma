@@ -51,7 +51,6 @@ export default function App() {
   const [index, setIndex] = useState(0)
   const [atlasIndex, setAtlasIndex] = useState(0)
   const [direction, setDirection] = useState(1)
-  const [pageTransitioning, setPageTransitioning] = useState(false)
   const [menu, setMenu] = useState<'category' | 'speed' | 'more' | null>(null)
   const [rate, setRate] = useState(1)
   const [saved, setSaved] = useState<string[]>(() => readSavedWords(knownWords))
@@ -91,7 +90,6 @@ export default function App() {
     window.addEventListener('storage', syncSavedWords)
     return () => window.removeEventListener('storage', syncSavedWords)
   }, [])
-  useEffect(() => { setPageTransitioning(false) }, [view, category])
   useEffect(() => { if (index >= visibleCards.length) setIndex(Math.max(0, visibleCards.length - 1)) }, [index, visibleCards.length])
   useEffect(() => {
     for (const nearby of [index, index - 1, index + 1, index + 2]) void preloadImage(visibleCards[nearby]?.image)
@@ -123,9 +121,10 @@ export default function App() {
     }
     const measure = () => {
       const progress = maxHeight ? currentHeight / maxHeight : 1
-      // The scroll pane extends behind the fixed controls; size the image from
+      // The scroll pane extends behind the header and controls; size the image from
       // the unobscured reading area so the overlay does not enlarge the image.
-      maxHeight = Math.min(360, illustrationSlot.clientWidth * 0.8, (scroll.clientHeight - 146) * 0.6)
+      const headerDepth = parseFloat(getComputedStyle(scroll).paddingTop) || 0
+      maxHeight = Math.min(360, illustrationSlot.clientWidth * 0.8, (scroll.clientHeight - headerDepth - 146) * 0.6)
       currentHeight = Math.max(maxHeight * 0.5, maxHeight * progress)
       illustration.style.width = `${maxHeight / 0.8}px`
       illustration.style.height = `${maxHeight}px`
@@ -325,7 +324,6 @@ export default function App() {
     setMenu(null)
     const complete = () => {
       if (request !== navigationRequest.current) return
-      setPageTransitioning(true)
       setDirection(value > index ? 1 : -1)
       if (playNext) autoPlayNext.current = value
       setIndex(value)
@@ -350,7 +348,7 @@ export default function App() {
     setSaved(current => current.includes(card.word) ? current.filter(value => value !== card.word) : [...current, card.word])
   }
   return <main className="page-shell"><section className="phone" aria-label={t('单词图鉴', 'Word Atlas')}>
-    <div className={`content content--${view}${view !== 'saved-list' && card ? ' content--study' : ''}${pageTransitioning ? ' content--transitioning' : ''}`}>
+    <div className={`content content--${view}${view !== 'saved-list' && card ? ' content--study' : ''}`}>
       {view === 'atlas' && <div className="category-row"><div className="popover-anchor" data-popover-root><button className="category-btn" aria-expanded={menu === 'category'} onClick={() => setMenu(menu === 'category' ? null : 'category')}>{categoryLabel(category)} <ChevronDown size={16}/></button>{menu === 'category' && <div className="menu category-menu">{categories.map(([zh, en]) => <button key={zh} onClick={() => chooseCategory(zh)}>{hideChinese ? en : zh}</button>)}</div>}</div><button className="favourites" onClick={openSavedList}><Bookmark className="favourites-icon" size={16} fill="currentColor"/><span>{t('收藏夹', 'Saved')} {saved.length}</span><ChevronRight size={13}/></button></div>}
       {view === 'saved-list' && <>
         <header className="subpage-header"><button className="subpage-back" onClick={backToAtlas} aria-label={t('返回单词图鉴', 'Back to Word Atlas')}><ChevronLeft size={22}/></button><h1>{t('收藏夹', 'Saved words')}({savedCards.length})</h1></header>
@@ -365,12 +363,13 @@ export default function App() {
       {view === 'saved-detail' && <header className="subpage-header"><button className="subpage-back subpage-back-label" onClick={backToSavedList} aria-label={t('返回收藏夹', 'Back to saved words')}><ChevronLeft size={22}/><span>{t('收藏夹', 'Saved words')}</span></button><span className="subpage-context">{t('单词详情', 'Word card')}</span></header>}
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
-        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={animation => { if (animation === 'center') setPageTransitioning(false) }}>
+        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }}>
           <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="sync" draggable={false} /> : <div className="missing-image">{card.word}</div>}</div></div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause reading') : t('朗读本页', 'Read this card')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
         </div>
+        <div className="study-backdrop" aria-hidden="true" />
         <div className="toolbar"><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'speed'} onClick={() => setMenu(menu === 'speed' ? null : 'speed')}>{t('语速', 'Speed')} <span className="speed-display">{speedNumber(rate)}<span className="speed-times">x</span></span> <ChevronDown size={16}/></button>{menu === 'speed' && <div className="menu rate-menu">{rates.map(value => <button key={value} onClick={() => { setRate(value); setMenu(null) }}>{speedLabel(value)} {value === rate && <b className="selected-dot" aria-label={t('当前语速', 'Current speed')} />}</button>)}</div>}</div><button className={saved.includes(card.word) ? 'saved' : ''} onClick={toggleSaved}><Star size={16} fill={saved.includes(card.word) ? 'currentColor' : 'none'}/>{saved.includes(card.word) ? t('已收藏', 'Saved') : t('收藏', 'Save')}</button><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')}>{t('更多', 'More')} <ChevronDown size={16}/></button>{menu === 'more' && <div className="menu more-menu"><label>{t('隐藏中文', 'Hide Chinese')} <input type="checkbox" checked={hideChinese} onChange={e => setHideChinese(e.target.checked)} /></label><label>{t('自动翻页', 'Auto advance')} <input type="checkbox" checked={autoAdvance} onChange={e => setAutoAdvance(e.target.checked)} /></label></div>}</div></div>
         <footer className="pager"><button className="prev" onClick={() => goTo(index - 1)} disabled={index === 0}><span className="pager-action"><ChevronLeft size={20}/><span className="pager-label">{t('上一张', 'Previous')}</span></span></button><span>{String(index + 1).padStart(2, '0')} / {String(visibleCards.length).padStart(2, '0')}</span><button className="next" onClick={() => goTo(index + 1)} disabled={index === visibleCards.length - 1}><span className="pager-action"><span className="pager-label">{t('下一张', 'Next')}</span><ChevronRight size={20}/></span></button></footer>
       </> : <div className="empty-state"><Bookmark size={32}/><h2>{t('这个分类暂无单词', 'No words in this category yet')}</h2><p>{t('可以切换分类继续浏览。', 'Choose another category to continue.')}</p></div>)}
