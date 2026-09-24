@@ -11,7 +11,13 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .page-shell{min-height:100dvh;background:#fff;position:relative}
 .phone{width:100%;height:100dvh;min-height:0;background:#fff;overflow:hidden;position:relative;display:flex;flex-direction:column}
 .content{--content-inset:20px;width:100%;max-width:1120px;margin-inline:auto;flex:1;min-height:0;padding:8px var(--content-inset) 24px;display:flex;flex-direction:column;overflow:hidden}
-.category-row{height:44px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
+.content--study{--footer-overlap:146px;--bottom-padding:24px;position:relative;isolation:isolate}
+.content--study>.card-scroll{position:relative;z-index:0;margin-bottom:calc(-1 * var(--footer-overlap));padding-bottom:var(--footer-overlap)}
+.content--study::before{content:"";position:absolute;z-index:1;inset:auto 0 0;height:calc(var(--footer-overlap) + var(--bottom-padding));background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);pointer-events:none}
+.content--study>.toolbar,.content--study>.pager{position:relative;z-index:2}
+.content--atlas.content--study>.category-row{margin-bottom:-44px}
+.content--atlas.content--study>.card-scroll{padding-top:44px}
+.category-row{height:44px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:3;border-radius:14px;background:rgba(244,247,246,.72);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .category-btn,.favourites,.toolbar button{border:0;background:transparent;color:#242424;font-family:inherit;font-size:14px;font-weight:500;line-height:1.2;display:flex;align-items:center;gap:4px;cursor:pointer}
 .category-btn{font-size:16px;font-weight:600;padding:11px 8px 11px 0;min-height:44px;gap:8px}
 .favourites{font-size:14px;font-weight:400;line-height:20px;min-height:44px;padding:0;gap:4px;white-space:nowrap}
@@ -58,7 +64,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .example p{font-size:18px;font-weight:400;line-height:23px;margin:0 0 6px}
 .example small{display:block;font-size:14px;line-height:1.5;color:#666}
 .spacer{flex:1 0 32px;min-height:32px}
-.toolbar{height:48px;min-height:48px;margin-top:20px;border-radius:14px;background:#f4f7f6;padding:0 4px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center}
+.toolbar{height:48px;min-height:48px;margin-top:20px;border-radius:14px;background:rgba(244,247,246,.76);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);padding:0 4px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center}
 .toolbar>.popover-anchor{min-width:0}
 .toolbar>button,.toolbar>.popover-anchor>button{font-size:13px;color:#666;height:40px;justify-content:center;width:100%;min-width:0;border-radius:10px;transition:background-color .16s ease,color .16s ease}
 .toolbar>button:active,.toolbar>.popover-anchor>button:active{background:#e3eee9}
@@ -95,6 +101,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .pager button:disabled{background:#eff2f1;color:#a0a0a0}
 @media(min-width:600px){
   .content{--content-inset:32px;padding-top:20px;padding-bottom:28px}
+  .content--study{--bottom-padding:28px}
   .card-stage{margin-top:20px}
   .illustration-slot{max-width:450px;margin-inline:auto}
   .definition{padding-top:24px}
@@ -109,6 +116,10 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
    Short landscape phones also get a compact split layout instead of a tiny strip. */
 @media(min-width:900px),(min-width:640px) and (max-height:600px){
   .content{--content-inset:40px;padding-top:24px;padding-bottom:32px}
+  .content--study::before{display:none}
+  .content--study>.card-scroll{margin-bottom:0;padding-bottom:0}
+  .content--atlas.content--study>.category-row{margin-bottom:0}
+  .content--atlas.content--study>.card-scroll{padding-top:0}
   .content--study{--study-footer-height:148px;--study-footer-gap:24px;--study-bottom-padding:32px;--study-illustration-extra:185px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) 48px 52px;column-gap:48px;row-gap:24px}
   .content--study>.category-row,.content--study>.subpage-header{grid-column:1 / -1}
   .content--study>.card-scroll{grid-column:1 / -1;grid-row:2 / -1;position:relative;z-index:0;overflow-y:auto;overflow-x:hidden;container-type:size;-webkit-overflow-scrolling:touch}
@@ -120,7 +131,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .word-row{height:auto;min-height:80px;padding-inline-end:4px;gap:16px}
   .word-row h2{overflow-wrap:anywhere}
   .spacer{display:none}
-  .content--study::after{content:"";grid-column:2;grid-row:3 / -1;z-index:1;background:#fff;opacity:1;transition:opacity .18s ease-out;pointer-events:none;margin:calc(-1 * var(--study-footer-gap)) calc(-1 * var(--content-inset)) calc(-1 * var(--study-bottom-padding)) 0}
+  .content--study::after{content:"";grid-column:2;grid-row:3 / -1;z-index:1;background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:1;transition:opacity .18s ease-out;pointer-events:none;margin:calc(-1 * var(--study-footer-gap)) calc(-1 * var(--content-inset)) calc(-1 * var(--study-bottom-padding)) 0}
   .content--study.content--transitioning>.card-scroll{z-index:1}
   .content--study.content--transitioning::after{z-index:0;opacity:0}
   .toolbar,.pager{grid-column:2;z-index:2}
@@ -133,6 +144,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 }
 @media(max-width:599px){
   .content{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
+  .content--study{--bottom-padding:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
   .content--atlas{padding-top:max(16px,env(safe-area-inset-top))}
 }
 @media(min-width:640px) and (max-height:600px){
