@@ -152,6 +152,14 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 @media(min-width:640px) and (max-width:1000px) and (max-height:600px){
   .content{--content-inset:max(24px,env(safe-area-inset-left),env(safe-area-inset-right))}
 }
+/* Input capability distinguishes a landscape phone from a desktop window;
+   dimensions guard cramped layouts and cover devices with unknown pointers. */
+@media (hover:hover) and (pointer:fine) and (min-width:900px) and (min-height:600px),
+       (any-pointer:coarse) and (min-width:700px) and (min-height:700px),
+       (min-width:740px) and (min-height:700px){
+  .page-shell{display:grid;place-items:center;padding:32px;background:#f5f7f6}
+  .phone{max-width:1200px;height:calc(100dvh - 64px);max-height:900px;border-radius:24px;box-shadow:0 12px 36px #163e3717}
+}
 @media(max-width:360px){
   .pager button{font-size:14px;padding:0 2px}
 }
