@@ -99,8 +99,6 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .illustration-slot{max-width:450px;margin-inline:auto}
   .definition{padding-top:24px}
   .example{max-width:65ch}
-  .example p{line-height:1.5}
-  .example small{line-height:1.65}
   .toolbar>button,.toolbar>.popover-anchor>button{height:44px;font-size:14px}
   .saved-list{padding-top:24px}
   .saved-row{min-height:96px;padding:16px;gap:16px}
@@ -122,12 +120,8 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .illustration-slot{position:sticky;top:0;align-self:start;height:calc(100cqh - var(--study-footer-height));max-width:none;min-width:0;margin:0;overflow:visible;container-type:size;display:grid;place-items:start center}
   .illustration{width:min(100cqw,calc(125cqh + var(--study-illustration-extra)));height:auto;aspect-ratio:5 / 4;display:flex;align-items:center;justify-content:center;will-change:auto}
   .definition{min-width:0;min-height:0;overflow:visible;padding:0 8px 32px 0}
-  .word-row{height:auto;min-height:88px;padding-inline-end:4px;gap:16px}
-  .word-row h2{font-size:40px;line-height:1.2;overflow-wrap:anywhere}
-  .phonetic{line-height:1.5}
-  .example{margin-top:24px}
-  .example p{font-size:19px;line-height:1.55;margin-bottom:12px}
-  .example small{font-size:15px;line-height:1.7}
+  .word-row{height:auto;min-height:80px;padding-inline-end:4px;gap:16px}
+  .word-row h2{overflow-wrap:anywhere}
   .spacer{display:none}
   .content--study::after{content:"";grid-column:2;grid-row:3 / -1;z-index:1;background:#fff;opacity:1;transition:opacity .18s ease-out;pointer-events:none;margin:calc(-1 * var(--study-footer-gap)) calc(-1 * var(--content-inset)) calc(-1 * var(--study-bottom-padding)) 0}
   .content--study.content--transitioning>.card-scroll{z-index:1}
@@ -150,11 +144,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .content{--content-inset:24px;padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
   .content--study{--study-footer-height:116px;--study-footer-gap:12px;--study-bottom-padding:max(12px,env(safe-area-inset-bottom));--study-illustration-extra:145px;column-gap:24px;row-gap:12px;grid-template-rows:44px minmax(0,1fr) 48px 44px}
   .card-body{column-gap:24px}
-  .word-row{min-height:68px}
-  .word-row h2{font-size:30px}
   .play{width:48px;height:48px}
-  .example{margin-top:12px}
-  .example p{font-size:17px}
   .pager,.pager button{height:44px}
   .category-menu{max-height:calc(100dvh - 100px)}
 }

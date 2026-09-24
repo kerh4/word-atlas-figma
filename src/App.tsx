@@ -63,6 +63,8 @@ export default function App() {
   const [paused, setPaused] = useState(false)
   const [speakingWord, setSpeakingWord] = useState(false)
   const activeSpeech = useRef<SpeechSynthesisUtterance | null>(null)
+  const autoPlayNext = useRef<number | null>(null)
+  const autoPlayTimer = useRef<number | null>(null)
   const navigationRequest = useRef(0)
   const cardScrollRef = useRef<HTMLDivElement | null>(null)
   const illustrationSlotRef = useRef<HTMLDivElement | null>(null)
@@ -253,13 +255,16 @@ export default function App() {
     }
   }, [menu])
   const stopAudio = () => {
+    if (autoPlayTimer.current !== null) window.clearTimeout(autoPlayTimer.current)
+    autoPlayTimer.current = null
+    autoPlayNext.current = null
     activeSpeech.current = null
     window.speechSynthesis?.cancel()
     setPlaying(false)
     setPaused(false)
     setSpeakingWord(false)
   }
-  const speak = (text: string, fromMainButton = false) => {
+  const speak = (text: string, fromMainButton = false, cardIndex = index) => {
     if (!window.speechSynthesis) return
     stopAudio()
     const speech = new SpeechSynthesisUtterance(text)
@@ -274,7 +279,7 @@ export default function App() {
       setPlaying(false)
       setPaused(false)
       setSpeakingWord(false)
-      if (autoAdvanceRef.current && index < visibleCards.length - 1) goTo(index + 1)
+      if (autoAdvanceRef.current && cardIndex < visibleCards.length - 1) goTo(cardIndex + 1, true)
     }
     speech.onerror = () => {
       if (activeSpeech.current !== speech) return
@@ -298,7 +303,7 @@ export default function App() {
   const openSavedDetail = (word: string) => { navigationRequest.current++; stopAudio(); setIndex(savedCards.findIndex(card => card.word === word)); setDirection(1); setView('saved-detail'); setMenu(null) }
   const backToSavedList = () => { navigationRequest.current++; stopAudio(); setView('saved-list'); setMenu(null) }
   const backToAtlas = () => { navigationRequest.current++; stopAudio(); setView('atlas'); setIndex(atlasIndex); setMenu(null) }
-  const goTo = (value: number) => {
+  const goTo = (value: number, playNext = false) => {
     const target = visibleCards[value]
     if (!target) return
     const request = ++navigationRequest.current
@@ -308,11 +313,24 @@ export default function App() {
       if (request !== navigationRequest.current) return
       setPageTransitioning(true)
       setDirection(value > index ? 1 : -1)
+      if (playNext) autoPlayNext.current = value
       setIndex(value)
     }
     if (!target.image || imagePreloads.get(target.image)?.decoded) complete()
     else void preloadImage(target.image).then(complete)
   }
+  useEffect(() => {
+    if (autoPlayNext.current !== index || !card) return
+    autoPlayNext.current = null
+    autoPlayTimer.current = window.setTimeout(() => {
+      autoPlayTimer.current = null
+      if (autoAdvanceRef.current) speak(`${card.word}. ${card.sentence}`, true, index)
+    }, reduceMotion ? 0 : 460)
+    return () => {
+      if (autoPlayTimer.current !== null) window.clearTimeout(autoPlayTimer.current)
+      autoPlayTimer.current = null
+    }
+  }, [index, view, category, card?.word, reduceMotion])
   const toggleSaved = () => {
     if (!card) return
     if (view === 'saved-detail' && saved.includes(card.word)) backToSavedList()
