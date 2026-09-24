@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { readSavedWords, savedWordsStorageKey, writeSavedWords } from './savedWordsStorage'
 
 type Card = { word: string; phonetic: string; meaning: string; sentence: string; translation: string; category: string; image?: string }
 const cards: Card[] = [
@@ -25,6 +26,7 @@ const categories = [
   ['食物与生存', 'Food & Survival'], ['动作与冒险', 'Actions & Adventure'], ['天气与环境', 'Weather & World'],
   ['村庄与生活', 'Village & Life'], ['创造与想象', 'Create & Imagine'],
 ] as const
+const knownWords = new Set(cards.map(card => card.word))
 const rates = [0.5, 0.8, 1, 1.25, 1.5]
 const speedNumber = (value: number) => value === 1.25 ? '1.25' : value.toFixed(1)
 const speedLabel = (value: number) => `${speedNumber(value)}x`
@@ -52,7 +54,7 @@ export default function App() {
   const [pageTransitioning, setPageTransitioning] = useState(false)
   const [menu, setMenu] = useState<'category' | 'speed' | 'more' | null>(null)
   const [rate, setRate] = useState(1)
-  const [saved, setSaved] = useState<string[]>(() => { try { return JSON.parse(localStorage.getItem('word-atlas-saved') || '[]') } catch { return [] } })
+  const [saved, setSaved] = useState<string[]>(() => readSavedWords(knownWords))
   const [hideChinese, setHideChinese] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [playing, setPlaying] = useState(false)
@@ -76,7 +78,14 @@ export default function App() {
     query.addEventListener('change', update)
     return () => query.removeEventListener('change', update)
   }, [])
-  useEffect(() => { localStorage.setItem('word-atlas-saved', JSON.stringify(saved)) }, [saved])
+  useEffect(() => { writeSavedWords(saved) }, [saved])
+  useEffect(() => {
+    const syncSavedWords = (event: StorageEvent) => {
+      if (event.key === savedWordsStorageKey || event.key === null) setSaved(readSavedWords(knownWords))
+    }
+    window.addEventListener('storage', syncSavedWords)
+    return () => window.removeEventListener('storage', syncSavedWords)
+  }, [])
   useEffect(() => { setPageTransitioning(false) }, [view, category])
   useEffect(() => { if (index >= visibleCards.length) setIndex(Math.max(0, visibleCards.length - 1)) }, [index, visibleCards.length])
   useEffect(() => {
