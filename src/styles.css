@@ -86,6 +86,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .pager button{height:52px;min-width:0;border:0;border-radius:999px;display:flex;align-items:center;justify-content:center;padding:0 8px;font-family:inherit;font-size:17px;font-weight:500;cursor:pointer}
 .pager-action{display:inline-flex;align-items:center;gap:4px;line-height:1;white-space:nowrap}
 .pager-action svg{display:block;flex:none}
+.pager-label{transform:translateY(.5px)}
 .pager .prev .pager-action{transform:translateX(-4px)}
 .pager .next .pager-action{transform:translateX(4px)}
 .prev{background:#287f70;color:white}
