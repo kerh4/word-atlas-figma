@@ -123,7 +123,9 @@ export default function App() {
     }
     const measure = () => {
       const progress = maxHeight ? currentHeight / maxHeight : 1
-      maxHeight = Math.min(360, illustrationSlot.clientWidth * 0.8, scroll.clientHeight * 0.6)
+      // The scroll pane extends behind the fixed controls; size the image from
+      // the unobscured reading area so the overlay does not enlarge the image.
+      maxHeight = Math.min(360, illustrationSlot.clientWidth * 0.8, (scroll.clientHeight - 146) * 0.6)
       currentHeight = Math.max(maxHeight * 0.5, maxHeight * progress)
       illustration.style.width = `${maxHeight / 0.8}px`
       illustration.style.height = `${maxHeight}px`
