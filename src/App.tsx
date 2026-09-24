@@ -34,7 +34,7 @@ export default function App() {
   const [speakingWord, setSpeakingWord] = useState(false)
   const activeSpeech = useRef<SpeechSynthesisUtterance | null>(null)
   const cardScrollRef = useRef<HTMLDivElement | null>(null)
-  const illustrationRef = useRef<HTMLDivElement | null>(null)
+  const illustrationSlotRef = useRef<HTMLDivElement | null>(null)
   const reduceMotion = useReducedMotion()
   const savedCards = saved.map(word => cards.find(card => card.word === word)).filter((card): card is Card => Boolean(card))
   const visibleCards = view === 'saved-detail' ? savedCards : category === '基础词汇' ? cards : cards.filter(card => card.category === category)
@@ -46,31 +46,34 @@ export default function App() {
   useLayoutEffect(() => {
     const scroll = cardScrollRef.current
     if (!scroll) return
-    const illustration = illustrationRef.current
-    if (!illustration) return
-    const placeholder = illustration.querySelector<HTMLElement>('.missing-image')
+    const illustrationSlot = illustrationSlotRef.current
+    const illustration = illustrationSlot?.firstElementChild as HTMLElement | null
+    if (!illustrationSlot || !illustration) return
+    const definition = illustrationSlot.closest('.card-body')?.querySelector('.definition')
     let maxHeight = 280
     let currentHeight = 280
+    let fullOverflow = 0
     const applyIllustrationSize = () => {
       const scale = maxHeight > 0 ? currentHeight / maxHeight : 1
-      illustration.style.height = `${currentHeight}px`
-      illustration.style.width = `${scale * 100}%`
-      illustration.style.borderRadius = `${24 * scale}px`
-      if (placeholder) placeholder.style.fontSize = `${28 * scale}px`
+      illustrationSlot.style.height = `${currentHeight}px`
+      illustration.style.transform = `scale(${scale})`
     }
     const measure = () => {
       const progress = maxHeight ? currentHeight / maxHeight : 1
-      maxHeight = Math.min(280, scroll.clientWidth * 0.8, scroll.clientHeight * 0.6)
+      maxHeight = Math.min(280, (scroll.clientWidth - 40) * 0.8, scroll.clientHeight * 0.6)
       currentHeight = Math.max(maxHeight * 0.5, maxHeight * progress)
+      illustration.style.height = `${maxHeight}px`
       applyIllustrationSize()
+      fullOverflow = Math.max(0, scroll.scrollHeight - scroll.clientHeight + maxHeight - currentHeight)
     }
     measure()
     scroll.scrollTop = 0
     const resizeObserver = new ResizeObserver(measure)
     resizeObserver.observe(scroll)
+    if (definition) resizeObserver.observe(definition)
     const consumeScroll = (delta: number, managed = false) => {
       const top = scroll.scrollTop
-      const overflow = Math.max(0, scroll.scrollHeight - scroll.clientHeight)
+      const overflow = Math.max(0, fullOverflow - maxHeight + currentHeight)
       const minHeight = maxHeight * 0.5
       if (delta > 0 && currentHeight > minHeight && overflow > 0) {
         const shrink = Math.min(delta, currentHeight - minHeight, overflow)
@@ -92,25 +95,71 @@ export default function App() {
       }
       return false
     }
-    const onWheel = (event: WheelEvent) => { if (consumeScroll(event.deltaY)) event.preventDefault() }
+    let momentumFrame = 0
+    const stopMomentum = () => { if (momentumFrame) cancelAnimationFrame(momentumFrame); momentumFrame = 0 }
+    const onWheel = (event: WheelEvent) => {
+      stopMomentum()
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? scroll.clientHeight : 1)
+      if (consumeScroll(delta)) event.preventDefault()
+    }
     let lastTouchY = 0
+    let lastTouchTime = 0
+    let velocity = 0
     let managedTouch = false
-    const onTouchStart = (event: TouchEvent) => { lastTouchY = event.touches[0]?.clientY ?? 0; managedTouch = false }
+    const onTouchStart = (event: TouchEvent) => {
+      stopMomentum()
+      lastTouchY = event.touches[0]?.clientY ?? 0
+      lastTouchTime = performance.now()
+      velocity = 0
+      managedTouch = false
+    }
     const onTouchMove = (event: TouchEvent) => {
       const y = event.touches[0]?.clientY ?? lastTouchY
-      if (consumeScroll(lastTouchY - y, managedTouch)) { event.preventDefault(); managedTouch = true }
+      const now = performance.now()
+      const delta = lastTouchY - y
+      if (consumeScroll(delta, managedTouch)) {
+        event.preventDefault()
+        managedTouch = true
+        velocity = Math.max(-2, Math.min(2, delta / Math.max(8, now - lastTouchTime)))
+      }
       lastTouchY = y
+      lastTouchTime = now
+    }
+    const onTouchEnd = () => {
+      if (!managedTouch || reduceMotion || performance.now() - lastTouchTime > 80 || Math.abs(velocity) < 0.05) return
+      let previousFrame = 0
+      const startedAt = performance.now()
+      const coast = (now: number) => {
+        if (!previousFrame) { previousFrame = now; momentumFrame = requestAnimationFrame(coast); return }
+        const elapsed = Math.min(32, now - previousFrame)
+        previousFrame = now
+        const top = scroll.scrollTop
+        const overflow = Math.max(0, fullOverflow - maxHeight + currentHeight)
+        const canMove = velocity > 0
+          ? currentHeight > maxHeight * 0.5 || top < overflow
+          : currentHeight < maxHeight || top > 0
+        if (!canMove || elapsed <= 0) { momentumFrame = 0; return }
+        consumeScroll(velocity * elapsed, true)
+        velocity *= Math.pow(0.93, elapsed / 16)
+        momentumFrame = Math.abs(velocity) >= 0.05 && now - startedAt < 900 ? requestAnimationFrame(coast) : 0
+      }
+      momentumFrame = requestAnimationFrame(coast)
     }
     scroll.addEventListener('wheel', onWheel, { passive: false })
     scroll.addEventListener('touchstart', onTouchStart, { passive: true })
     scroll.addEventListener('touchmove', onTouchMove, { passive: false })
+    scroll.addEventListener('touchend', onTouchEnd)
+    scroll.addEventListener('touchcancel', stopMomentum)
     return () => {
+      stopMomentum()
       resizeObserver.disconnect()
       scroll.removeEventListener('wheel', onWheel)
       scroll.removeEventListener('touchstart', onTouchStart)
       scroll.removeEventListener('touchmove', onTouchMove)
+      scroll.removeEventListener('touchend', onTouchEnd)
+      scroll.removeEventListener('touchcancel', stopMomentum)
     }
-  }, [card?.word, view])
+  }, [card?.word, view, reduceMotion])
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
   useEffect(() => {
     if (!menu) return
@@ -195,8 +244,8 @@ export default function App() {
       {view === 'saved-detail' && <header className="subpage-header"><button className="subpage-back subpage-back-label" onClick={backToSavedList} aria-label={t('返回收藏夹', 'Back to saved words')}><ChevronLeft size={22}/><span>{t('收藏夹', 'Saved words')}</span></button><span className="subpage-context">{t('单词详情', 'Word card')}</span></header>}
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
-        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${side * 100}%)`, opacity: 0 }), center: { transform: 'translateX(0)', opacity: 1 }, exit: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${-side * 100}%)`, opacity: 0 })}} transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}>
-          <div className="illustration" ref={illustrationRef}>{card.image ? <img src={card.image} alt={t('手持宝剑的像素风玩家', 'Pixel art player with a sword')} /> : <div className="missing-image">{card.word}</div>}</div>
+        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${side * 100}%)`, opacity: 0 }), center: { transform: 'translateX(0)', opacity: 1 }, exit: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${-side * 100}%)`, opacity: 0 })}} transition={{ duration: reduceMotion ? 0.01 : 0.28, ease: [0.22, 1, 0.36, 1] }}>
+          <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t('手持宝剑的像素风玩家', 'Pixel art player with a sword')} /> : <div className="missing-image">{card.word}</div>}</div></div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
