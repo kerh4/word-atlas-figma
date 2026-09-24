@@ -4,7 +4,18 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 
 type Card = { word: string; phonetic: string; meaning: string; sentence: string; translation: string; category: string; image?: string }
 const cards: Card[] = [
-  { word: 'Player', phonetic: '/ˈpleɪə(r)/', meaning: 'n. 玩家', sentence: 'A brave player.', translation: '一位勇敢的玩家。', category: '基础词汇', image: '/assets/figma-raw-2.png' },
+  { word: 'Player', phonetic: '/ˈpleɪə(r)/', meaning: 'n. 玩家', sentence: 'A brave player.', translation: '一位勇敢的玩家。', category: '基础词汇', image: '/assets/words/player.webp' },
+  { word: 'World', phonetic: '/wɜːld/', meaning: 'n. 世界', sentence: 'A big world.', translation: '一个广阔的世界。', category: '基础词汇', image: '/assets/words/world.webp' },
+  { word: 'Block', phonetic: '/blɒk/', meaning: 'n. 方块', sentence: 'A square block.', translation: '一个方形的方块。', category: '基础词汇', image: '/assets/words/block.webp' },
+  { word: 'Item', phonetic: '/ˈaɪtəm/', meaning: 'n. 物品', sentence: 'A useful item.', translation: '一件有用的物品。', category: '基础词汇', image: '/assets/words/item.webp' },
+  { word: 'Tool', phonetic: '/tuːl/', meaning: 'n. 工具', sentence: 'A handy tool.', translation: '一件顺手的工具。', category: '基础词汇', image: '/assets/words/tool.webp' },
+  { word: 'Mob', phonetic: '/mɒb/', meaning: 'n. 游戏生物', sentence: 'A game creature.', translation: '一只游戏中的生物。', category: '基础词汇', image: '/assets/words/mob.webp' },
+  { word: 'House', phonetic: '/haʊs/', meaning: 'n. 房屋', sentence: 'A small house.', translation: '一间小房子。', category: '基础词汇', image: '/assets/words/house.webp' },
+  { word: 'Cave', phonetic: '/keɪv/', meaning: 'n. 洞穴', sentence: 'A dark cave.', translation: '一个昏暗的洞穴。', category: '基础词汇', image: '/assets/words/cave.webp' },
+  { word: 'Village', phonetic: '/ˈvɪlɪdʒ/', meaning: 'n. 村庄', sentence: 'A little village.', translation: '一个小村庄。', category: '基础词汇', image: '/assets/words/village.webp' },
+  { word: 'Farm', phonetic: '/fɑːm/', meaning: 'n. 农场', sentence: 'A wheat farm.', translation: '一座小麦农场。', category: '基础词汇', image: '/assets/words/farm.webp' },
+  { word: 'Map', phonetic: '/mæp/', meaning: 'n. 地图', sentence: 'A paper map.', translation: '一张纸质地图。', category: '基础词汇', image: '/assets/words/map.webp' },
+  { word: 'Chest', phonetic: '/tʃest/', meaning: 'n. 箱子', sentence: 'A storage chest.', translation: '一个储物箱。', category: '基础词汇', image: '/assets/words/chest.webp' },
   { word: 'Forest', phonetic: '/ˈfɒrɪst/', meaning: 'n. 森林', sentence: 'The fox lives in the forest. Every morning, it follows a narrow path between the tall trees, listens to the birds singing above, and looks for a quiet place beside the stream. When the sunlight reaches the leaves, the whole forest seems to glow, and the fox knows it is time to explore a little farther. It passes a fallen log covered in soft moss, watches a family of rabbits disappear into the grass, and pauses to hear the wind moving through the branches. By evening, the fox returns home with many new stories about the forest.', translation: '狐狸住在森林里。每天早晨，它沿着高大树木之间的一条小路前行，听着头顶鸟儿的歌声，寻找溪边安静的地方。阳光照到树叶时，整片森林仿佛亮了起来，狐狸也知道，该继续往更远处探索了。它经过一根长满柔软苔藓的倒木，看着一群兔子消失在草丛中，还停下来聆听风吹过树枝的声音。傍晚，狐狸带着许多关于森林的新故事回到了家。', category: '自然与探索' },
   { word: 'Sword', phonetic: '/sɔːd/', meaning: 'n. 剑', sentence: 'The sword is very sharp.', translation: '这把剑非常锋利。', category: '工具与装备' },
 ]
@@ -40,7 +51,7 @@ export default function App() {
   const reduceMotion = useReducedMotion()
   const [splitLayout, setSplitLayout] = useState(() => window.matchMedia(splitLayoutQuery).matches)
   const savedCards = saved.map(word => cards.find(card => card.word === word)).filter((card): card is Card => Boolean(card))
-  const visibleCards = view === 'saved-detail' ? savedCards : category === '基础词汇' ? cards : cards.filter(card => card.category === category)
+  const visibleCards = view === 'saved-detail' ? savedCards : cards.filter(card => card.category === category)
   const card = visibleCards[index]
   const t = (zh: string, en: string) => hideChinese ? en : zh
   const categoryLabel = (zh: string) => hideChinese ? categories.find(pair => pair[0] === zh)?.[1] || zh : zh
@@ -264,7 +275,7 @@ export default function App() {
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
         <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${side * 100}%)`, opacity: 0 }), center: { transform: 'translateX(0)', opacity: 1 }, exit: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${-side * 100}%)`, opacity: 0 })}} transition={{ duration: reduceMotion ? 0.01 : 0.28, ease: [0.22, 1, 0.36, 1] }}>
-          <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t('手持宝剑的像素风玩家', 'Pixel art player with a sword')} /> : <div className="missing-image">{card.word}</div>}</div></div>
+          <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="async" /> : <div className="missing-image">{card.word}</div>}</div></div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
