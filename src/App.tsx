@@ -17,6 +17,8 @@ const categories = [
 const rates = [0.5, 0.8, 1, 1.25, 1.5]
 const speedNumber = (value: number) => value === 1.25 ? '1.25' : value.toFixed(1)
 const speedLabel = (value: number) => `${speedNumber(value)}x`
+// Keep this query in sync with the split-layout rules in styles.css.
+const splitLayoutQuery = '(min-width: 900px), (min-width: 700px) and (max-height: 500px)'
 
 export default function App() {
   const [category, setCategory] = useState('基础词汇')
@@ -36,11 +38,19 @@ export default function App() {
   const cardScrollRef = useRef<HTMLDivElement | null>(null)
   const illustrationSlotRef = useRef<HTMLDivElement | null>(null)
   const reduceMotion = useReducedMotion()
+  const [splitLayout, setSplitLayout] = useState(() => window.matchMedia(splitLayoutQuery).matches)
   const savedCards = saved.map(word => cards.find(card => card.word === word)).filter((card): card is Card => Boolean(card))
   const visibleCards = view === 'saved-detail' ? savedCards : category === '基础词汇' ? cards : cards.filter(card => card.category === category)
   const card = visibleCards[index]
   const t = (zh: string, en: string) => hideChinese ? en : zh
   const categoryLabel = (zh: string) => hideChinese ? categories.find(pair => pair[0] === zh)?.[1] || zh : zh
+  useEffect(() => {
+    const query = window.matchMedia(splitLayoutQuery)
+    const update = () => setSplitLayout(query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
   useEffect(() => { localStorage.setItem('word-atlas-saved', JSON.stringify(saved)) }, [saved])
   useEffect(() => { if (index >= visibleCards.length) setIndex(Math.max(0, visibleCards.length - 1)) }, [index, visibleCards.length])
   useLayoutEffect(() => {
@@ -50,6 +60,10 @@ export default function App() {
     const illustration = illustrationSlot?.firstElementChild as HTMLElement | null
     if (!illustrationSlot || !illustration) return
     const definition = illustrationSlot.closest('.card-body')?.querySelector('.definition')
+    scroll.scrollTop = 0
+    if (definition) definition.scrollTop = 0
+    // Wide screens keep the illustration visible and use native text scrolling.
+    if (splitLayout) return
     let maxHeight = 280
     let currentHeight = 280
     let fullOverflow = 0
@@ -60,8 +74,9 @@ export default function App() {
     }
     const measure = () => {
       const progress = maxHeight ? currentHeight / maxHeight : 1
-      maxHeight = Math.min(280, (scroll.clientWidth - 40) * 0.8, scroll.clientHeight * 0.6)
+      maxHeight = Math.min(360, illustrationSlot.clientWidth * 0.8, scroll.clientHeight * 0.6)
       currentHeight = Math.max(maxHeight * 0.5, maxHeight * progress)
+      illustration.style.width = `${maxHeight / 0.8}px`
       illustration.style.height = `${maxHeight}px`
       applyIllustrationSize()
       fullOverflow = Math.max(0, scroll.scrollHeight - scroll.clientHeight + maxHeight - currentHeight)
@@ -158,8 +173,12 @@ export default function App() {
       scroll.removeEventListener('touchmove', onTouchMove)
       scroll.removeEventListener('touchend', onTouchEnd)
       scroll.removeEventListener('touchcancel', stopMomentum)
+      illustrationSlot.style.removeProperty('height')
+      illustration.style.removeProperty('height')
+      illustration.style.removeProperty('width')
+      illustration.style.removeProperty('transform')
     }
-  }, [card?.word, view, reduceMotion])
+  }, [card?.word, view, reduceMotion, splitLayout])
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
   useEffect(() => {
     if (!menu) return
@@ -229,7 +248,7 @@ export default function App() {
     setSaved(current => current.includes(card.word) ? current.filter(value => value !== card.word) : [...current, card.word])
   }
   return <main className="page-shell"><section className="phone" aria-label={t('单词图鉴', 'Word Atlas')}>
-    <div className="content">
+    <div className={`content content--${view}${view !== 'saved-list' && card ? ' content--study' : ''}`}>
       {view === 'atlas' && <div className="category-row"><div className="popover-anchor" data-popover-root><button className="category-btn" aria-expanded={menu === 'category'} onClick={() => setMenu(menu === 'category' ? null : 'category')}>{categoryLabel(category)} <ChevronDown size={16}/></button>{menu === 'category' && <div className="menu category-menu">{categories.map(([zh, en]) => <button key={zh} onClick={() => chooseCategory(zh)}>{hideChinese ? en : zh}</button>)}</div>}</div><button className="favourites" onClick={openSavedList}><Bookmark className="favourites-icon" size={16} fill="currentColor"/><span>{t('收藏夹', 'Saved')} {saved.length}</span><ChevronRight size={13}/></button></div>}
       {view === 'saved-list' && <>
         <header className="subpage-header"><button className="subpage-back" onClick={backToAtlas} aria-label={t('返回单词图鉴', 'Back to Word Atlas')}><ChevronLeft size={22}/></button><h1>{t('收藏夹', 'Saved words')}({savedCards.length})</h1></header>

@@ -9,8 +9,8 @@ button{-webkit-tap-highlight-color:transparent}
 button:focus:not(:focus-visible){outline:none}
 button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .page-shell{min-height:100dvh;display:grid;place-items:center;padding:24px;position:relative}
-.phone{width:390px;height:min(844px,calc(100dvh - 48px));background:#fff;overflow:hidden;box-shadow:0 18px 50px #163e3724;position:relative;display:flex;flex-direction:column}
-.content{flex:1;min-height:0;padding:8px 20px 24px;display:flex;flex-direction:column;overflow:hidden}
+.phone{width:100%;max-width:720px;height:calc(100dvh - 48px);background:#fff;overflow:hidden;box-shadow:0 12px 40px #163e3710;position:relative;display:flex;flex-direction:column;border-radius:24px}
+.content{--content-inset:20px;flex:1;min-height:0;padding:8px var(--content-inset) 24px;display:flex;flex-direction:column;overflow:hidden}
 .category-row{height:44px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
 .category-btn,.favourites,.toolbar button{border:0;background:transparent;color:#242424;font-family:inherit;font-size:14px;font-weight:500;line-height:1.2;display:flex;align-items:center;gap:4px;cursor:pointer}
 .category-btn{font-size:16px;font-weight:600;padding:11px 8px 11px 0;min-height:44px;gap:8px}
@@ -41,19 +41,19 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .saved-empty h2{margin:20px 0 8px;color:#242424;font-size:18px;font-weight:600}
 .saved-empty p{margin:0 0 24px;color:#666;font-size:14px;font-weight:400;line-height:1.5}
 .saved-empty button{min-height:44px;padding:0 20px;border:0;border-radius:999px;background:#287f70;color:white;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer}
-.card-scroll{flex:1;min-height:0;width:calc(100% + 40px);margin-inline:-20px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:flex;flex-direction:column;scrollbar-width:none}
+.card-scroll{flex:1;min-height:0;width:calc(100% + 2 * var(--content-inset));margin-inline:calc(-1 * var(--content-inset));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:flex;flex-direction:column;scrollbar-width:none}
 .card-scroll::-webkit-scrollbar{display:none}
 .card-stage{position:relative;flex-shrink:0;margin-top:8px;overflow:hidden}
-.card-body{width:100%;padding-inline:20px}
+.card-body{width:100%;padding-inline:var(--content-inset)}
 .illustration-slot{width:100%;height:280px;flex-shrink:0;overflow:hidden}
-.illustration{width:100%;height:280px;border-radius:24px;background:#f9fbea;overflow:hidden;display:grid;place-items:center;transform-origin:center top;will-change:transform}
+.illustration{width:100%;height:280px;margin-inline:auto;border-radius:24px;background:#f9fbea;overflow:hidden;display:grid;place-items:center;transform-origin:center top;will-change:transform}
 .illustration img{width:80%;height:80%;object-fit:contain}
 .definition{padding-top:20px}
 .word-row{height:80px;display:flex;justify-content:space-between;align-items:center;padding-inline-end:8px}
 .word-row h2{font-family:"Arial Rounded MT Bold",Arial,sans-serif;font-weight:600;margin:0 0 6px;font-size:34px;line-height:43px;letter-spacing:-1.5px}
 .phonetic{margin:0;color:#666;font-size:14px;font-weight:400;line-height:17px}
 .phonetic span{margin:0 4px}
-.play{width:60px;height:60px;border:0;border-radius:50%;background:#287f70;color:white;display:grid;place-items:center;cursor:pointer}
+.play{width:60px;height:60px;flex-shrink:0;border:0;border-radius:50%;background:#287f70;color:white;display:grid;place-items:center;cursor:pointer}
 .example{margin-top:14px;padding:0;border:0;background:none;text-align:left;cursor:pointer;color:#242424}
 .example p{font-size:18px;font-weight:400;line-height:23px;margin:0 0 6px}
 .example small{display:block;font-size:14px;line-height:1.5;color:#666}
@@ -91,10 +91,65 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .next{background:#287f70;color:white}
 .pager button:disabled{cursor:not-allowed}
 .pager .next:disabled{background:#eff2f1;color:#a0a0a0}
-@media(max-width:480px){
+@media(min-width:600px){
+  .content{--content-inset:32px;padding-top:20px;padding-bottom:28px}
+  .card-stage{margin-top:20px}
+  .illustration-slot{max-width:450px;margin-inline:auto}
+  .definition{padding-top:24px}
+  .example{max-width:65ch}
+  .example p{line-height:1.5}
+  .example small{line-height:1.65}
+  .toolbar>button,.toolbar>.popover-anchor>button{height:44px;font-size:14px}
+  .saved-list{padding-top:24px}
+  .saved-row{min-height:96px;padding:16px;gap:16px}
+  .saved-row-copy small{font-size:14px}
+}
+/* The reading pane and controls share the right column; the image stays visible.
+   Short landscape phones also get a compact split layout instead of a tiny strip. */
+@media(min-width:900px),(min-width:700px) and (max-height:500px){
+  .page-shell{padding:32px}
+  .phone{max-width:1120px;height:min(820px,calc(100dvh - 64px))}
+  .content{--content-inset:40px;padding-top:24px;padding-bottom:32px}
+  .content--study{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) 48px 52px;column-gap:48px;row-gap:24px}
+  .content--study>.category-row,.content--study>.subpage-header{grid-column:1 / -1}
+  .content--study>.card-scroll{grid-column:1 / -1;overflow:hidden}
+  .card-stage{height:100%;min-height:0;margin-top:0;flex:1}
+  .card-body{height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:48px}
+  .illustration-slot{height:100%;max-width:none;min-width:0;margin:0;container-type:size;display:grid;place-items:start center}
+  .illustration{width:min(100cqw,125cqh);height:auto;aspect-ratio:5 / 4;will-change:auto}
+  .definition{min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 8px 32px 0;scrollbar-width:thin;scrollbar-color:#cedbd5 transparent}
+  .word-row{height:auto;min-height:88px;padding-inline-end:4px;gap:16px}
+  .word-row h2{font-size:40px;line-height:1.2;overflow-wrap:anywhere}
+  .phonetic{line-height:1.5}
+  .example{margin-top:24px}
+  .example p{font-size:19px;line-height:1.55;margin-bottom:12px}
+  .example small{font-size:15px;line-height:1.7}
+  .spacer{display:none}
+  .toolbar,.pager{grid-column:2}
+  .pager{margin-top:0}
+  .content--saved-list>.subpage-header,.saved-list{width:100%;max-width:800px;margin-inline:auto}
+  .saved-row{grid-template-columns:72px minmax(0,1fr) 20px;gap:20px}
+  .saved-thumb{width:72px;height:72px}
+  .category-menu{max-height:min(348px,calc(100dvh - 160px))}
+}
+@media(max-width:599px){
   .page-shell{padding:0;display:block}
-  .phone{width:100vw;height:100dvh;min-height:0;box-shadow:none}
-  .content{padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
+  .phone{height:100dvh;min-height:0;box-shadow:none;border-radius:0}
+  .content{padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
+}
+@media(min-width:700px) and (max-height:500px){
+  .page-shell{padding:0}
+  .phone{height:100dvh;border-radius:0;box-shadow:none}
+  .content{--content-inset:max(24px,env(safe-area-inset-left),env(safe-area-inset-right));padding-top:max(8px,env(safe-area-inset-top));padding-bottom:max(12px,env(safe-area-inset-bottom))}
+  .content--study{column-gap:24px;row-gap:12px;grid-template-rows:44px minmax(0,1fr) 48px 44px}
+  .card-body{column-gap:24px}
+  .word-row{min-height:68px}
+  .word-row h2{font-size:30px}
+  .play{width:48px;height:48px}
+  .example{margin-top:12px}
+  .example p{font-size:17px}
+  .pager,.pager button{height:44px}
+  .category-menu{max-height:calc(100dvh - 100px)}
 }
 @media(max-width:360px){
   .pager button{font-size:14px;padding:0 2px}
