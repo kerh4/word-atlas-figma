@@ -175,11 +175,11 @@ export default function App() {
     <div className="content">
       {view === 'atlas' && <div className="category-row"><div className="popover-anchor" data-popover-root><button className="category-btn" aria-expanded={menu === 'category'} onClick={() => setMenu(menu === 'category' ? null : 'category')}>{categoryLabel(category)} <ChevronDown size={16}/></button>{menu === 'category' && <div className="menu category-menu">{categories.map(([zh, en]) => <button key={zh} onClick={() => chooseCategory(zh)}>{hideChinese ? en : zh}</button>)}</div>}</div><button className="favourites" onClick={openSavedList}><Bookmark className="favourites-icon" size={16} fill="currentColor"/><span>{t('收藏夹', 'Saved')} {saved.length}</span><ChevronRight size={13}/></button></div>}
       {view === 'saved-list' && <>
-        <header className="subpage-header"><button className="subpage-back" onClick={backToAtlas} aria-label={t('返回单词图鉴', 'Back to Word Atlas')}><ChevronLeft size={22}/></button><h1>{t('收藏夹', 'Saved words')}</h1><span className="subpage-count">{savedCards.length}</span></header>
+        <header className="subpage-header"><button className="subpage-back" onClick={backToAtlas} aria-label={t('返回单词图鉴', 'Back to Word Atlas')}><ChevronLeft size={22}/></button><h1>{t('收藏夹', 'Saved words')}({savedCards.length})</h1></header>
         {savedCards.length ? <div className="saved-list" aria-label={t('已收藏单词', 'Saved words')}>
           {savedCards.map(savedCard => <button className="saved-row" key={savedCard.word} aria-label={`${savedCard.word}，${hideChinese ? savedCard.phonetic : savedCard.meaning}，${t('查看卡片', 'View card')}`} onClick={() => openSavedDetail(savedCard.word)}>
             <span className="saved-thumb" aria-hidden="true">{savedCard.image ? <img src={savedCard.image} alt="" /> : <span>{savedCard.word}</span>}</span>
-            <span className="saved-row-copy"><strong>{savedCard.word}</strong><span>{hideChinese ? savedCard.phonetic : savedCard.meaning}</span><small>{savedCard.sentence}</small></span>
+            <span className="saved-row-copy"><span className="saved-word-line"><strong>{savedCard.word}</strong><span>{hideChinese ? savedCard.phonetic : savedCard.meaning}</span></span><small>{savedCard.sentence}</small></span>
             <ChevronRight className="saved-row-arrow" size={18}/>
           </button>)}
         </div> : <div className="saved-empty"><Bookmark size={30}/><h2>{t('还没有收藏的单词', 'No saved words yet')}</h2><p>{t('在单词卡片上点按「收藏」，就能在这里找到它。', 'Save a word from its card to find it here.')}</p><button onClick={backToAtlas}>{t('返回单词图鉴', 'Back to Word Atlas')}</button></div>}
