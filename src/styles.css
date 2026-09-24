@@ -127,13 +127,13 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .content--study>.card-scroll{grid-column:1 / -1;grid-row:1 / -1;z-index:0;margin-top:0;margin-bottom:0;padding-bottom:0;overflow-y:auto;overflow-x:hidden;container-type:size;-webkit-overflow-scrolling:touch}
   .card-stage{min-height:100%;height:auto;margin-top:0;flex:0 0 auto;overflow:visible;padding-bottom:var(--study-footer-height)}
   .card-body{min-height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:48px}
-  .illustration-slot{position:sticky;top:0;align-self:start;height:calc(100cqh - var(--study-footer-height));max-width:none;min-width:0;margin:0;overflow:visible;container-type:size;display:grid;place-items:start center}
-  .illustration{width:min(100cqw,calc(125cqh + var(--study-illustration-extra)));height:auto;aspect-ratio:5 / 4;display:flex;align-items:center;justify-content:center;will-change:auto}
+  .illustration-slot{position:sticky;top:0;align-self:start;height:calc(100cqh - var(--study-footer-height))!important;max-width:none;min-width:0;margin:0;overflow:visible;container-type:size;display:grid;place-items:start center}
+  .illustration{width:min(100cqw,calc(125cqh + var(--study-illustration-extra)))!important;height:auto!important;aspect-ratio:5 / 4;display:flex;align-items:center;justify-content:center;transform:none!important;will-change:auto}
   .definition{min-width:0;min-height:0;overflow:visible;padding:0 8px 32px 0}
   .word-row{height:auto;min-height:80px;padding-inline-end:4px;gap:16px}
   .word-row h2{overflow-wrap:anywhere}
   .spacer{display:none}
-  .study-backdrop{left:calc(50% + 0.5 * var(--study-footer-gap) - 24px);right:0;height:calc(var(--study-footer-height) - var(--study-footer-gap))}
+  .study-backdrop{left:calc(50% + 0.5 * var(--study-footer-gap));right:0;height:calc(var(--study-footer-height) - var(--study-footer-gap))}
   .toolbar,.pager{grid-column:2;z-index:2}
   .toolbar{grid-row:3}
   .pager{grid-row:4}

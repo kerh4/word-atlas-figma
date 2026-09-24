@@ -76,7 +76,7 @@ export default function App() {
   const card = visibleCards[index]
   const t = (zh: string, en: string) => hideChinese ? en : zh
   const categoryLabel = (zh: string) => hideChinese ? categories.find(pair => pair[0] === zh)?.[1] || zh : zh
-  useEffect(() => {
+  useLayoutEffect(() => {
     const query = window.matchMedia(splitLayoutQuery)
     const update = () => setSplitLayout(query.matches)
     update()
