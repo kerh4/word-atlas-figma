@@ -116,7 +116,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .content{--content-inset:40px;padding-top:24px;padding-bottom:32px}
   .content--study{--study-footer-height:148px;--study-footer-gap:24px;--study-bottom-padding:32px;--study-illustration-extra:185px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:44px minmax(0,1fr) 48px 52px;column-gap:48px;row-gap:24px}
   .content--study>.category-row,.content--study>.subpage-header{grid-column:1 / -1}
-  .content--study>.card-scroll{grid-column:1 / -1;grid-row:2 / -1;overflow-y:auto;overflow-x:hidden;container-type:size;-webkit-overflow-scrolling:touch}
+  .content--study>.card-scroll{grid-column:1 / -1;grid-row:2 / -1;position:relative;z-index:0;overflow-y:auto;overflow-x:hidden;container-type:size;-webkit-overflow-scrolling:touch}
   .card-stage{min-height:100%;height:auto;margin-top:0;flex:0 0 auto;overflow:visible;padding-bottom:var(--study-footer-height)}
   .card-body{min-height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:48px}
   .illustration-slot{position:sticky;top:0;align-self:start;height:calc(100cqh - var(--study-footer-height));max-width:none;min-width:0;margin:0;overflow:visible;container-type:size;display:grid;place-items:start center}
@@ -129,7 +129,9 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .example p{font-size:19px;line-height:1.55;margin-bottom:12px}
   .example small{font-size:15px;line-height:1.7}
   .spacer{display:none}
-  .content--study::after{content:"";grid-column:2;grid-row:3 / -1;z-index:1;background:#fff;pointer-events:none;margin:calc(-1 * var(--study-footer-gap)) calc(-1 * var(--content-inset)) calc(-1 * var(--study-bottom-padding)) 0}
+  .content--study::after{content:"";grid-column:2;grid-row:3 / -1;z-index:1;background:#fff;opacity:1;transition:opacity .18s ease-out;pointer-events:none;margin:calc(-1 * var(--study-footer-gap)) calc(-1 * var(--content-inset)) calc(-1 * var(--study-bottom-padding)) 0}
+  .content--study.content--transitioning>.card-scroll{z-index:1}
+  .content--study.content--transitioning::after{z-index:0;opacity:0}
   .toolbar,.pager{grid-column:2;z-index:2}
   .toolbar{grid-row:3}
   .pager{grid-row:4}
@@ -161,4 +163,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 }
 @media(max-width:360px){
   .pager button{font-size:14px;padding:0 2px}
+}
+@media(prefers-reduced-motion:reduce){
+  .content--study::after{transition:none}
 }
