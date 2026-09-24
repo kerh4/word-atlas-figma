@@ -2,31 +2,20 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { readSavedWords, savedWordsStorageKey, writeSavedWords } from './savedWordsStorage'
-
-type Card = { word: string; phonetic: string; meaning: string; sentence: string; translation: string; category: string; image?: string }
-const cards: Card[] = [
-  { word: 'Player', phonetic: '/ˈpleɪə(r)/', meaning: 'n. 玩家', sentence: 'A brave player.', translation: '一位勇敢的玩家。', category: '基础词汇', image: '/assets/words/player.webp' },
-  { word: 'World', phonetic: '/wɜːld/', meaning: 'n. 世界', sentence: 'A big world.', translation: '一个广阔的世界。', category: '基础词汇', image: '/assets/words/world.webp' },
-  { word: 'Block', phonetic: '/blɒk/', meaning: 'n. 方块', sentence: 'A square block.', translation: '一个方形的方块。', category: '基础词汇', image: '/assets/words/block.webp' },
-  { word: 'Item', phonetic: '/ˈaɪtəm/', meaning: 'n. 物品', sentence: 'A useful item.', translation: '一件有用的物品。', category: '基础词汇', image: '/assets/words/item.webp' },
-  { word: 'Tool', phonetic: '/tuːl/', meaning: 'n. 工具', sentence: 'A handy tool.', translation: '一件顺手的工具。', category: '基础词汇', image: '/assets/words/tool.webp' },
-  { word: 'Mob', phonetic: '/mɒb/', meaning: 'n. 游戏生物', sentence: 'A game creature.', translation: '一只游戏中的生物。', category: '基础词汇', image: '/assets/words/mob.webp' },
-  { word: 'House', phonetic: '/haʊs/', meaning: 'n. 房屋', sentence: 'A small house.', translation: '一间小房子。', category: '基础词汇', image: '/assets/words/house.webp' },
-  { word: 'Cave', phonetic: '/keɪv/', meaning: 'n. 洞穴', sentence: 'A dark cave.', translation: '一个昏暗的洞穴。', category: '基础词汇', image: '/assets/words/cave.webp' },
-  { word: 'Village', phonetic: '/ˈvɪlɪdʒ/', meaning: 'n. 村庄', sentence: 'A little village.', translation: '一个小村庄。', category: '基础词汇', image: '/assets/words/village.webp' },
-  { word: 'Farm', phonetic: '/fɑːm/', meaning: 'n. 农场', sentence: 'A wheat farm.', translation: '一座小麦农场。', category: '基础词汇', image: '/assets/words/farm.webp' },
-  { word: 'Map', phonetic: '/mæp/', meaning: 'n. 地图', sentence: 'A paper map.', translation: '一张纸质地图。', category: '基础词汇', image: '/assets/words/map.webp' },
-  { word: 'Chest', phonetic: '/tʃest/', meaning: 'n. 箱子', sentence: 'A storage chest.', translation: '一个储物箱。', category: '基础词汇', image: '/assets/words/chest.webp' },
-  { word: 'Forest', phonetic: '/ˈfɒrɪst/', meaning: 'n. 森林', sentence: 'The fox lives in the forest. Every morning, it follows a narrow path between the tall trees, listens to the birds singing above, and looks for a quiet place beside the stream. When the sunlight reaches the leaves, the whole forest seems to glow, and the fox knows it is time to explore a little farther. It passes a fallen log covered in soft moss, watches a family of rabbits disappear into the grass, and pauses to hear the wind moving through the branches. By evening, the fox returns home with many new stories about the forest.', translation: '狐狸住在森林里。每天早晨，它沿着高大树木之间的一条小路前行，听着头顶鸟儿的歌声，寻找溪边安静的地方。阳光照到树叶时，整片森林仿佛亮了起来，狐狸也知道，该继续往更远处探索了。它经过一根长满柔软苔藓的倒木，看着一群兔子消失在草丛中，还停下来聆听风吹过树枝的声音。傍晚，狐狸带着许多关于森林的新故事回到了家。', category: '自然与探索' },
-  { word: 'Sword', phonetic: '/sɔːd/', meaning: 'n. 剑', sentence: 'The sword is very sharp.', translation: '这把剑非常锋利。', category: '工具与装备' },
-]
+import { cards, type Card } from './catalogCards'
 const categories = [
-  ['基础词汇', 'Basic Words'], ['自然与探索', 'Nature & Discovery'], ['生物与伙伴', 'Creatures & Friends'],
-  ['方块与材料', 'Blocks & Materials'], ['工具与装备', 'Tools & Gear'], ['建筑与空间', 'Buildings & Places'],
-  ['食物与生存', 'Food & Survival'], ['动作与冒险', 'Actions & Adventure'], ['天气与环境', 'Weather & World'],
-  ['村庄与生活', 'Village & Life'], ['创造与想象', 'Create & Imagine'],
+  ['基础方块世界', 'Basic Block World Things'],
+  ['方块与建造', 'Blocks And Building'],
+  ['动物与伙伴', 'Animals And Friends'],
+  ['怪物与首领', 'Monsters And Bosses'],
+  ['食物与耕作', 'Food And Farming'],
+  ['工具与装备', 'Tools And Gear'],
+  ['地点与生物群系', 'Places And Biomes'],
+  ['建筑与宝藏', 'Structures And Treasures'],
+  ['颜色与材料', 'Colors And Materials'],
+  ['动作词汇', 'Action Words'],
 ] as const
-const knownWords = new Set(cards.map(card => card.word))
+const knownWords = new Set(cards.map(card => card.id))
 const rates = [0.5, 0.8, 1, 1.1, 1.2]
 const speedNumber = (value: number) => value.toFixed(1)
 const speedLabel = (value: number) => `${speedNumber(value)}x`
@@ -46,7 +35,7 @@ const preloadImage = (src?: string) => {
 }
 
 export default function App() {
-  const [category, setCategory] = useState('基础词汇')
+  const [category, setCategory] = useState('基础方块世界')
   const [view, setView] = useState<'atlas' | 'saved-list' | 'saved-detail'>('atlas')
   const [index, setIndex] = useState(0)
   const [atlasIndex, setAtlasIndex] = useState(0)
@@ -63,7 +52,9 @@ export default function App() {
   const [pageTransitioning, setPageTransitioning] = useState(false)
   const [paused, setPaused] = useState(false)
   const [speakingWord, setSpeakingWord] = useState(false)
-  const activeSpeech = useRef<SpeechSynthesisUtterance | null>(null)
+  const activeAudio = useRef<HTMLAudioElement | null>(null)
+  const activeFinish = useRef<(() => void) | null>(null)
+  const playbackStopTimer = useRef<number | null>(null)
   const autoPlayNext = useRef<number | null>(null)
   const autoPlayTimer = useRef<number | null>(null)
   const navigationRequest = useRef(0)
@@ -71,7 +62,7 @@ export default function App() {
   const illustrationSlotRef = useRef<HTMLDivElement | null>(null)
   const reduceMotion = useReducedMotion()
   const [splitLayout, setSplitLayout] = useState(() => window.matchMedia(splitLayoutQuery).matches)
-  const savedCards = saved.map(word => cards.find(card => card.word === word)).filter((card): card is Card => Boolean(card))
+  const savedCards = saved.map(id => cards.find(card => card.id === id)).filter((card): card is Card => Boolean(card))
   const visibleCards = view === 'saved-detail' ? savedDetailCards : cards.filter(card => card.category === category)
   const card = visibleCards[index]
   const t = (zh: string, en: string) => hideChinese ? en : zh
@@ -248,8 +239,11 @@ export default function App() {
       scroll.removeEventListener('touchcancel', stopMomentum)
       // Keep the exiting card's measured geometry intact until its slide finishes.
     }
-  }, [card?.word, view, reduceMotion, splitLayout])
-  useEffect(() => () => window.speechSynthesis?.cancel(), [])
+  }, [card?.id, view, reduceMotion, splitLayout])
+  useEffect(() => () => {
+    if (playbackStopTimer.current !== null) window.clearTimeout(playbackStopTimer.current)
+    activeAudio.current?.pause()
+  }, [])
   useEffect(() => {
     if (!menu) return
     const closeOnOutsideClick = (event: PointerEvent) => {
@@ -267,52 +261,69 @@ export default function App() {
   }, [menu])
   const stopAudio = () => {
     if (autoPlayTimer.current !== null) window.clearTimeout(autoPlayTimer.current)
+    if (playbackStopTimer.current !== null) window.clearTimeout(playbackStopTimer.current)
     autoPlayTimer.current = null
+    playbackStopTimer.current = null
     autoPlayNext.current = null
-    activeSpeech.current = null
-    window.speechSynthesis?.cancel()
+    activeAudio.current?.pause()
+    activeAudio.current = null
+    activeFinish.current = null
     setPlaying(false)
     setPaused(false)
     setSpeakingWord(false)
   }
-  const speak = (text: string, fromMainButton = false, cardIndex = index) => {
-    if (!window.speechSynthesis) return
+  const speak = (fromMainButton = false, cardIndex = index) => {
+    const audioCard = visibleCards[cardIndex]
+    if (!audioCard) return
     stopAudio()
-    const speech = new SpeechSynthesisUtterance(text)
-    activeSpeech.current = speech
-    setPlaying(true)
-    setSpeakingWord(fromMainButton)
-    speech.lang = 'en-US'
-    speech.rate = rate
-    speech.onend = () => {
-      if (activeSpeech.current !== speech) return
-      activeSpeech.current = null
+    const audio = new Audio(audioCard.audio.src)
+    const start = fromMainButton ? audioCard.audio.wordStart : audioCard.audio.sentenceStart
+    const finish = () => {
+      if (activeAudio.current !== audio) return
+      if (playbackStopTimer.current !== null) window.clearTimeout(playbackStopTimer.current)
+      playbackStopTimer.current = null
+      audio.pause()
+      activeAudio.current = null
+      activeFinish.current = null
       setPlaying(false)
       setPaused(false)
       setSpeakingWord(false)
       if (autoAdvanceRef.current && cardIndex < visibleCards.length - 1) goTo(cardIndex + 1, true)
     }
-    speech.onerror = () => {
-      if (activeSpeech.current !== speech) return
-      activeSpeech.current = null
-      setPlaying(false)
-      setPaused(false)
-      setSpeakingWord(false)
+    activeAudio.current = audio
+    activeFinish.current = finish
+    setPlaying(true)
+    setSpeakingWord(fromMainButton)
+    audio.preload = 'auto'
+    audio.playbackRate = rate
+    audio.currentTime = start
+    audio.ontimeupdate = () => {
+      if (audio.currentTime >= audioCard.audio.end) finish()
     }
-    window.speechSynthesis.speak(speech)
+    audio.onended = finish
+    audio.onerror = finish
+    void audio.play().then(() => {
+      playbackStopTimer.current = window.setTimeout(finish, ((audioCard.audio.end - start) / rate) * 1000 + 300)
+    }).catch(finish)
   }
   const toggleWordPlayback = () => {
     if (!card) return
     if (playing && speakingWord) {
-      if (paused) window.speechSynthesis.resume()
-      else window.speechSynthesis.pause()
+      if (paused) {
+        void activeAudio.current?.play()
+        if (activeAudio.current) playbackStopTimer.current = window.setTimeout(() => activeFinish.current?.(), ((card.audio.end - activeAudio.current.currentTime) / rate) * 1000 + 300)
+      } else {
+        activeAudio.current?.pause()
+        if (playbackStopTimer.current !== null) window.clearTimeout(playbackStopTimer.current)
+        playbackStopTimer.current = null
+      }
       setPaused(!paused)
-    } else speak(`${card.word}. ${card.sentence}`, true)
+    } else speak(true)
   }
   const chooseCategory = (value: string) => { navigationRequest.current++; stopAudio(); setCategory(value); setView('atlas'); setIndex(0); setMenu(null) }
   const openSavedList = () => { navigationRequest.current++; stopAudio(); setAtlasIndex(index); setView('saved-list'); setMenu(null) }
-  const openSavedDetail = (word: string) => {
-    const detailIndex = savedCards.findIndex(card => card.word === word)
+  const openSavedDetail = (id: string) => {
+    const detailIndex = savedCards.findIndex(card => card.id === id)
     if (detailIndex < 0) return
     navigationRequest.current++
     stopAudio()
@@ -346,16 +357,16 @@ export default function App() {
     autoPlayNext.current = null
     autoPlayTimer.current = window.setTimeout(() => {
       autoPlayTimer.current = null
-      if (autoAdvanceRef.current) speak(`${card.word}. ${card.sentence}`, true, index)
+      if (autoAdvanceRef.current) speak(true, index)
     }, reduceMotion ? 0 : 460)
     return () => {
       if (autoPlayTimer.current !== null) window.clearTimeout(autoPlayTimer.current)
       autoPlayTimer.current = null
     }
-  }, [index, view, category, card?.word, reduceMotion])
+  }, [index, view, category, card?.id, reduceMotion])
   const toggleSaved = () => {
     if (!card) return
-    setSaved(current => current.includes(card.word) ? current.filter(value => value !== card.word) : [...current, card.word])
+    setSaved(current => current.includes(card.id) ? current.filter(value => value !== card.id) : [...current, card.id])
   }
   return <main className="page-shell"><section className="phone" aria-label={t('单词图鉴', 'Word Atlas')}>
     <div className={`content content--${view}${view !== 'saved-list' && card ? ' content--study' : ''}${pageTransitioning ? ' content--transitioning' : ''}`}>
@@ -363,7 +374,7 @@ export default function App() {
       {view === 'saved-list' && <>
         <header className="subpage-header"><button className="subpage-back" onClick={backToAtlas} aria-label={t('返回单词图鉴', 'Back to Word Atlas')}><ChevronLeft size={22}/></button><h1>{t('收藏夹', 'Saved words')}({savedCards.length})</h1></header>
         {savedCards.length ? <div className="saved-list" aria-label={t('已收藏单词', 'Saved words')}>
-          {savedCards.map(savedCard => <button className="saved-row" key={savedCard.word} aria-label={`${savedCard.word}，${hideChinese ? savedCard.phonetic : savedCard.meaning}，${t('查看卡片', 'View card')}`} onClick={() => openSavedDetail(savedCard.word)}>
+          {savedCards.map(savedCard => <button className="saved-row" key={savedCard.id} aria-label={`${savedCard.word}，${hideChinese ? savedCard.phonetic : savedCard.meaning}，${t('查看卡片', 'View card')}`} onClick={() => openSavedDetail(savedCard.id)}>
             <span className="saved-thumb" aria-hidden="true">{savedCard.image ? <img src={savedCard.image} alt="" /> : <span>{savedCard.word}</span>}</span>
             <span className="saved-row-copy"><span className="saved-word-line"><strong>{savedCard.word}</strong><span>{hideChinese ? savedCard.phonetic : savedCard.meaning}</span></span><small>{savedCard.sentence}</small></span>
             <ChevronRight className="saved-row-arrow" size={18}/>
@@ -373,14 +384,14 @@ export default function App() {
       {view === 'saved-detail' && <header className="subpage-header"><button className="subpage-back subpage-back-label" onClick={backToSavedList} aria-label={t('返回收藏夹', 'Back to saved words')}><ChevronLeft size={22}/><span>{t('收藏夹', 'Saved words')}</span></button><span className="subpage-context">{t('单词详情', 'Word card')}</span></header>}
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
-        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={animation => { if (animation === 'center') setPageTransitioning(false) }}>
+        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.id} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={animation => { if (animation === 'center') setPageTransitioning(false) }}>
           <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="sync" draggable={false} /> : <div className="missing-image">{card.word}</div>}</div></div>
-          <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause reading') : t('朗读本页', 'Read this card')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
+          <section className="definition"><div className="word-row"><div><h2>{card.word}</h2>{(card.phonetic || (!hideChinese && card.meaning)) && <p className="phonetic">{card.phonetic}{card.phonetic && !hideChinese && card.meaning && <span>·</span>}{!hideChinese && card.meaning}</p>}</div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause reading') : t('朗读本页', 'Read this card')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(false)}><p>{card.sentence}</p>{!hideChinese && card.translation && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
         </div>
         <div className="study-backdrop" aria-hidden="true" />
-        <div className="toolbar"><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'speed'} onClick={() => setMenu(menu === 'speed' ? null : 'speed')}>{t('语速', 'Speed')} <span className="speed-display">{speedNumber(rate)}<span className="speed-times">x</span></span> <ChevronDown size={16}/></button>{menu === 'speed' && <div className="menu rate-menu">{rates.map(value => <button key={value} onClick={() => { setRate(value); setMenu(null) }}>{speedLabel(value)} {value === rate && <b className="selected-dot" aria-label={t('当前语速', 'Current speed')} />}</button>)}</div>}</div><button className={saved.includes(card.word) ? 'saved' : ''} onClick={toggleSaved}><Star size={16} fill={saved.includes(card.word) ? 'currentColor' : 'none'}/>{saved.includes(card.word) ? t('已收藏', 'Saved') : t('收藏', 'Save')}</button><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')}>{t('更多', 'More')} <ChevronDown size={16}/></button>{menu === 'more' && <div className="menu more-menu"><label>{t('隐藏中文', 'Hide Chinese')} <input type="checkbox" checked={hideChinese} onChange={e => setHideChinese(e.target.checked)} /></label><label>{t('自动翻页', 'Auto advance')} <input type="checkbox" checked={autoAdvance} onChange={e => setAutoAdvance(e.target.checked)} /></label></div>}</div></div>
+        <div className="toolbar"><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'speed'} onClick={() => setMenu(menu === 'speed' ? null : 'speed')}>{t('语速', 'Speed')} <span className="speed-display">{speedNumber(rate)}<span className="speed-times">x</span></span> <ChevronDown size={16}/></button>{menu === 'speed' && <div className="menu rate-menu">{rates.map(value => <button key={value} onClick={() => { setRate(value); setMenu(null) }}>{speedLabel(value)} {value === rate && <b className="selected-dot" aria-label={t('当前语速', 'Current speed')} />}</button>)}</div>}</div><button className={saved.includes(card.id) ? 'saved' : ''} onClick={toggleSaved}><Star size={16} fill={saved.includes(card.id) ? 'currentColor' : 'none'}/>{saved.includes(card.id) ? t('已收藏', 'Saved') : t('收藏', 'Save')}</button><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')}>{t('更多', 'More')} <ChevronDown size={16}/></button>{menu === 'more' && <div className="menu more-menu"><label>{t('隐藏中文', 'Hide Chinese')} <input type="checkbox" checked={hideChinese} onChange={e => setHideChinese(e.target.checked)} /></label><label>{t('自动翻页', 'Auto advance')} <input type="checkbox" checked={autoAdvance} onChange={e => setAutoAdvance(e.target.checked)} /></label></div>}</div></div>
         <footer className="pager"><button className="prev" onClick={() => goTo(index - 1)} disabled={index === 0}><span className="pager-action"><ChevronLeft size={20}/><span className="pager-label">{t('上一张', 'Previous')}</span></span></button><span>{String(index + 1).padStart(2, '0')} / {String(visibleCards.length).padStart(2, '0')}</span><button className="next" onClick={() => goTo(index + 1)} disabled={index === visibleCards.length - 1}><span className="pager-action"><span className="pager-label">{t('下一张', 'Next')}</span><ChevronRight size={20}/></span></button></footer>
       </> : <div className="empty-state"><Bookmark size={32}/><h2>{t('这个分类暂无单词', 'No words in this category yet')}</h2><p>{t('可以切换分类继续浏览。', 'Choose another category to continue.')}</p></div>)}
     </div></section></main>
