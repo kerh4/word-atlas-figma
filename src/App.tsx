@@ -18,7 +18,7 @@ const rates = [0.5, 0.8, 1, 1.25, 1.5]
 const speedNumber = (value: number) => value === 1.25 ? '1.25' : value.toFixed(1)
 const speedLabel = (value: number) => `${speedNumber(value)}x`
 // Keep this query in sync with the split-layout rules in styles.css.
-const splitLayoutQuery = '(min-width: 900px), (min-width: 700px) and (max-height: 500px)'
+const splitLayoutQuery = '(min-width: 900px), (min-width: 640px) and (max-height: 600px)'
 
 export default function App() {
   const [category, setCategory] = useState('基础词汇')
