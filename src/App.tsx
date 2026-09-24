@@ -55,6 +55,7 @@ export default function App() {
   const [menu, setMenu] = useState<'category' | 'speed' | 'more' | null>(null)
   const [rate, setRate] = useState(1)
   const [saved, setSaved] = useState<string[]>(() => readSavedWords(knownWords))
+  const [savedDetailCards, setSavedDetailCards] = useState<Card[]>([])
   const [hideChinese, setHideChinese] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const autoAdvanceRef = useRef(autoAdvance)
@@ -71,7 +72,7 @@ export default function App() {
   const reduceMotion = useReducedMotion()
   const [splitLayout, setSplitLayout] = useState(() => window.matchMedia(splitLayoutQuery).matches)
   const savedCards = saved.map(word => cards.find(card => card.word === word)).filter((card): card is Card => Boolean(card))
-  const visibleCards = view === 'saved-detail' ? savedCards : cards.filter(card => card.category === category)
+  const visibleCards = view === 'saved-detail' ? savedDetailCards : cards.filter(card => card.category === category)
   const card = visibleCards[index]
   const t = (zh: string, en: string) => hideChinese ? en : zh
   const categoryLabel = (zh: string) => hideChinese ? categories.find(pair => pair[0] === zh)?.[1] || zh : zh
@@ -300,7 +301,18 @@ export default function App() {
   }
   const chooseCategory = (value: string) => { navigationRequest.current++; stopAudio(); setCategory(value); setView('atlas'); setIndex(0); setMenu(null) }
   const openSavedList = () => { navigationRequest.current++; stopAudio(); setAtlasIndex(index); setView('saved-list'); setMenu(null) }
-  const openSavedDetail = (word: string) => { navigationRequest.current++; stopAudio(); setIndex(savedCards.findIndex(card => card.word === word)); setDirection(1); setView('saved-detail'); setMenu(null) }
+  const openSavedDetail = (word: string) => {
+    const detailIndex = savedCards.findIndex(card => card.word === word)
+    if (detailIndex < 0) return
+    navigationRequest.current++
+    stopAudio()
+    // Keep the opened browsing sequence stable if a word is unsaved in its detail view.
+    setSavedDetailCards(savedCards)
+    setIndex(detailIndex)
+    setDirection(1)
+    setView('saved-detail')
+    setMenu(null)
+  }
   const backToSavedList = () => { navigationRequest.current++; stopAudio(); setView('saved-list'); setMenu(null) }
   const backToAtlas = () => { navigationRequest.current++; stopAudio(); setView('atlas'); setIndex(atlasIndex); setMenu(null) }
   const goTo = (value: number, playNext = false) => {
@@ -333,7 +345,6 @@ export default function App() {
   }, [index, view, category, card?.word, reduceMotion])
   const toggleSaved = () => {
     if (!card) return
-    if (view === 'saved-detail' && saved.includes(card.word)) backToSavedList()
     setSaved(current => current.includes(card.word) ? current.filter(value => value !== card.word) : [...current, card.word])
   }
   return <main className="page-shell"><section className="phone" aria-label={t('单词图鉴', 'Word Atlas')}>
