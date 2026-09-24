@@ -113,7 +113,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .content--study>.card-scroll{grid-column:1 / -1;grid-row:2 / -1;overflow:hidden}
   .card-stage{height:100%;min-height:0;margin-top:0;flex:1}
   .card-body{height:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:48px}
-  .illustration-slot{height:100%;max-width:none;min-width:0;margin:0;container-type:size;display:grid;place-items:center}
+  .illustration-slot{height:100%;max-width:none;min-width:0;margin:0;container-type:size;display:grid;place-items:start center}
   .illustration{width:min(100cqw,125cqh);height:auto;aspect-ratio:5 / 4;display:flex;align-items:center;justify-content:center;will-change:auto}
   .definition{height:calc(100% - var(--study-footer-height));min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 8px 32px 0;scrollbar-width:thin;scrollbar-color:#cedbd5 transparent}
   .word-row{height:auto;min-height:88px;padding-inline-end:4px;gap:16px}
