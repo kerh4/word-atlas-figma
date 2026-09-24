@@ -81,7 +81,15 @@ export default function App() {
     const update = () => setSplitLayout(query.matches)
     update()
     query.addEventListener('change', update)
-    return () => query.removeEventListener('change', update)
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    window.visualViewport?.addEventListener('resize', update)
+    return () => {
+      query.removeEventListener('change', update)
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+      window.visualViewport?.removeEventListener('resize', update)
+    }
   }, [])
   useEffect(() => { writeSavedWords(saved) }, [saved])
   useEffect(() => {
@@ -364,7 +372,7 @@ export default function App() {
       </>}
       {view === 'saved-detail' && <header className="subpage-header"><button className="subpage-back subpage-back-label" onClick={backToSavedList} aria-label={t('返回收藏夹', 'Back to saved words')}><ChevronLeft size={22}/><span>{t('收藏夹', 'Saved words')}</span></button><span className="subpage-context">{t('单词详情', 'Word card')}</span></header>}
       {view !== 'saved-list' && (card ? <>
-        <div className="card-scroll" ref={cardScrollRef}>
+        <div className="card-scroll" ref={cardScrollRef} key={splitLayout ? 'split' : 'stacked'}>
         <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={animation => { if (animation === 'center') setPageTransitioning(false) }}>
           <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="sync" draggable={false} /> : <div className="missing-image">{card.word}</div>}</div></div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause reading') : t('朗读本页', 'Read this card')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
