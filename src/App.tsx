@@ -90,7 +90,13 @@ export default function App() {
     scroll.scrollTop = 0
     if (definition) definition.scrollTop = 0
     // Wide screens keep the illustration visible and use native text scrolling.
-    if (splitLayout) return
+    if (splitLayout) {
+      illustrationSlot.style.removeProperty('height')
+      illustration.style.removeProperty('height')
+      illustration.style.removeProperty('width')
+      illustration.style.removeProperty('transform')
+      return
+    }
     let maxHeight = 280
     let currentHeight = 280
     let fullOverflow = 0
@@ -214,10 +220,7 @@ export default function App() {
       scroll.removeEventListener('touchmove', onTouchMove)
       scroll.removeEventListener('touchend', onTouchEnd)
       scroll.removeEventListener('touchcancel', stopMomentum)
-      illustrationSlot.style.removeProperty('height')
-      illustration.style.removeProperty('height')
-      illustration.style.removeProperty('width')
-      illustration.style.removeProperty('transform')
+      // Keep the exiting card's measured geometry intact until its slide finishes.
     }
   }, [card?.word, view, reduceMotion, splitLayout])
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
