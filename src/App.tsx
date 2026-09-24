@@ -16,7 +16,7 @@ const categories = [
 ] as const
 const rates = [0.5, 0.8, 1, 1.25, 1.5]
 const speedNumber = (value: number) => value === 1.25 ? '1.25' : value.toFixed(1)
-const speedLabel = (value: number) => `${speedNumber(value)}×`
+const speedLabel = (value: number) => `${speedNumber(value)}x`
 
 export default function App() {
   const [category, setCategory] = useState('基础词汇')
@@ -48,13 +48,21 @@ export default function App() {
     if (!scroll) return
     const illustration = illustrationRef.current
     if (!illustration) return
+    const placeholder = illustration.querySelector<HTMLElement>('.missing-image')
     let maxHeight = 280
     let currentHeight = 280
+    const applyIllustrationSize = () => {
+      const scale = maxHeight > 0 ? currentHeight / maxHeight : 1
+      illustration.style.height = `${currentHeight}px`
+      illustration.style.width = `${scale * 100}%`
+      illustration.style.borderRadius = `${24 * scale}px`
+      if (placeholder) placeholder.style.fontSize = `${28 * scale}px`
+    }
     const measure = () => {
       const progress = maxHeight ? currentHeight / maxHeight : 1
       maxHeight = Math.min(280, scroll.clientWidth * 0.8, scroll.clientHeight * 0.6)
       currentHeight = Math.max(maxHeight * 0.5, maxHeight * progress)
-      illustration.style.height = `${currentHeight}px`
+      applyIllustrationSize()
     }
     measure()
     scroll.scrollTop = 0
@@ -67,14 +75,14 @@ export default function App() {
       if (delta > 0 && currentHeight > minHeight && overflow > 0) {
         const shrink = Math.min(delta, currentHeight - minHeight, overflow)
         currentHeight -= shrink
-        illustration.style.height = `${currentHeight}px`
+        applyIllustrationSize()
         scroll.scrollTop = top + delta - shrink
         return true
       }
       if (delta < 0 && currentHeight < maxHeight && top + delta < 0) {
         const expansion = Math.min(-(top + delta), maxHeight - currentHeight)
         currentHeight += expansion
-        illustration.style.height = `${currentHeight}px`
+        applyIllustrationSize()
         scroll.scrollTop = 0
         return true
       }
@@ -193,7 +201,7 @@ export default function App() {
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
         </div>
-        <div className="toolbar"><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'speed'} onClick={() => setMenu(menu === 'speed' ? null : 'speed')}>{t('语速', 'Speed')} <span className="speed-display">{speedNumber(rate)}<span className="speed-times">×</span></span> <ChevronDown size={16}/></button>{menu === 'speed' && <div className="menu rate-menu">{rates.map(value => <button key={value} onClick={() => { setRate(value); setMenu(null) }}>{speedLabel(value)} {value === rate && <b className="selected-dot" aria-label={t('当前语速', 'Current speed')} />}</button>)}</div>}</div><button className={saved.includes(card.word) ? 'saved' : ''} onClick={toggleSaved}><Star size={16} fill={saved.includes(card.word) ? 'currentColor' : 'none'}/>{saved.includes(card.word) ? t('已收藏', 'Saved') : t('收藏', 'Save')}</button><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')}>{t('更多', 'More')} <ChevronDown size={16}/></button>{menu === 'more' && <div className="menu more-menu"><label>{t('隐藏中文', 'Hide Chinese')} <input type="checkbox" checked={hideChinese} onChange={e => setHideChinese(e.target.checked)} /></label><label>{t('自动翻页', 'Auto advance')} <input type="checkbox" checked={autoAdvance} onChange={e => setAutoAdvance(e.target.checked)} /></label></div>}</div></div>
+        <div className="toolbar"><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'speed'} onClick={() => setMenu(menu === 'speed' ? null : 'speed')}>{t('语速', 'Speed')} <span className="speed-display">{speedNumber(rate)}<span className="speed-times">x</span></span> <ChevronDown size={16}/></button>{menu === 'speed' && <div className="menu rate-menu">{rates.map(value => <button key={value} onClick={() => { setRate(value); setMenu(null) }}>{speedLabel(value)} {value === rate && <b className="selected-dot" aria-label={t('当前语速', 'Current speed')} />}</button>)}</div>}</div><button className={saved.includes(card.word) ? 'saved' : ''} onClick={toggleSaved}><Star size={16} fill={saved.includes(card.word) ? 'currentColor' : 'none'}/>{saved.includes(card.word) ? t('已收藏', 'Saved') : t('收藏', 'Save')}</button><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')}>{t('更多', 'More')} <ChevronDown size={16}/></button>{menu === 'more' && <div className="menu more-menu"><label>{t('隐藏中文', 'Hide Chinese')} <input type="checkbox" checked={hideChinese} onChange={e => setHideChinese(e.target.checked)} /></label><label>{t('自动翻页', 'Auto advance')} <input type="checkbox" checked={autoAdvance} onChange={e => setAutoAdvance(e.target.checked)} /></label></div>}</div></div>
         <footer className="pager"><button className="prev" onClick={() => goTo(index - 1)} disabled={index === 0}><span className="pager-action"><ChevronLeft size={20}/><span className="pager-label">{t('上一张', 'Previous')}</span></span></button><span>{String(index + 1).padStart(2, '0')} / {String(visibleCards.length).padStart(2, '0')}</span><button className="next" onClick={() => goTo(index + 1)} disabled={index === visibleCards.length - 1}><span className="pager-action"><span className="pager-label">{t('下一张', 'Next')}</span><ChevronRight size={20}/></span></button></footer>
       </> : <div className="empty-state"><Bookmark size={32}/><h2>{t('这个分类暂无单词', 'No words in this category yet')}</h2><p>{t('可以切换分类继续浏览。', 'Choose another category to continue.')}</p></div>)}
     </div></section></main>
