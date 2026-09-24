@@ -44,7 +44,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .card-scroll{flex:1;min-height:0;width:calc(100% + 2 * var(--content-inset));margin-inline:calc(-1 * var(--content-inset));overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:flex;flex-direction:column;scrollbar-width:none}
 .card-scroll::-webkit-scrollbar{display:none}
 .card-stage{position:relative;flex-shrink:0;margin-top:8px;overflow:hidden}
-.card-body{width:100%;padding-inline:var(--content-inset);touch-action:pan-y}
+.card-body{width:100%;padding-inline:var(--content-inset)}
 .illustration-slot{width:100%;height:280px;flex-shrink:0;overflow:hidden}
 .illustration{width:100%;height:280px;margin-inline:auto;border-radius:24px;background:transparent;overflow:hidden;display:grid;place-items:center;transform-origin:center top;will-change:transform}
 .illustration img{display:block;width:100%;height:100%;min-width:0;min-height:0;object-fit:contain;border-radius:inherit}

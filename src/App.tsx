@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
-import { AnimatePresence, motion, useReducedMotion, type PanInfo } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 
 type Card = { word: string; phonetic: string; meaning: string; sentence: string; translation: string; category: string; image?: string }
 const cards: Card[] = [
@@ -299,13 +299,6 @@ export default function App() {
     if (!target.image || imagePreloads.get(target.image)?.decoded) complete()
     else void preloadImage(target.image).then(complete)
   }
-  const onCardDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const distance = info.offset.x
-    const velocity = info.velocity.x
-    if (Math.abs(distance) < 65 && Math.abs(velocity) < 450) return
-    const swipe = Math.abs(distance) >= 24 ? distance : velocity
-    goTo(index + (swipe < 0 ? 1 : -1))
-  }
   const toggleSaved = () => {
     if (!card) return
     if (view === 'saved-detail' && saved.includes(card.word)) backToSavedList()
@@ -327,7 +320,7 @@ export default function App() {
       {view === 'saved-detail' && <header className="subpage-header"><button className="subpage-back subpage-back-label" onClick={backToSavedList} aria-label={t('返回收藏夹', 'Back to saved words')}><ChevronLeft size={22}/><span>{t('收藏夹', 'Saved words')}</span></button><span className="subpage-context">{t('单词详情', 'Word card')}</span></header>}
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
-        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} drag={visibleCards.length > 1 ? 'x' : false} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.18} dragMomentum={false} dragTransition={{ bounceStiffness: 340, bounceDamping: 32 }} onDragEnd={onCardDragEnd}>
+        <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }}>
           <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="sync" draggable={false} /> : <div className="missing-image">{card.word}</div>}</div></div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
