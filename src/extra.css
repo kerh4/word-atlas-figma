@@ -5,3 +5,10 @@
 .is-playing{box-shadow:0 0 0 5px #287f7033}
 .mini-island{position:relative;overflow:hidden;border:0}
 .mini-island img{position:absolute;width:136px;height:59px;max-width:none;left:-34.2px;top:-15.4px}
+@media(max-width:480px){
+  .phone{min-height:0}
+  .content{overflow-y:auto;min-height:0}
+  .illustration{height:auto;aspect-ratio:5/4;flex-shrink:0}
+  .illustration img{width:80%;height:auto;aspect-ratio:1}
+  .pager{position:sticky;bottom:0;background:white;z-index:2;padding-bottom:0}
+}
