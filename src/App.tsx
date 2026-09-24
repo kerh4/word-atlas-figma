@@ -32,10 +32,9 @@ export default function App() {
   const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(false)
   const [speakingWord, setSpeakingWord] = useState(false)
-  const [illustrationHeight, setIllustrationHeight] = useState(280)
-  const illustrationHeightRef = useRef(280)
   const activeSpeech = useRef<SpeechSynthesisUtterance | null>(null)
   const cardScrollRef = useRef<HTMLDivElement | null>(null)
+  const illustrationRef = useRef<HTMLDivElement | null>(null)
   const reduceMotion = useReducedMotion()
   const savedCards = saved.map(word => cards.find(card => card.word === word)).filter((card): card is Card => Boolean(card))
   const visibleCards = view === 'saved-detail' ? savedCards : category === '基础词汇' ? cards : cards.filter(card => card.category === category)
@@ -47,39 +46,63 @@ export default function App() {
   useLayoutEffect(() => {
     const scroll = cardScrollRef.current
     if (!scroll) return
-    illustrationHeightRef.current = 280
-    setIllustrationHeight(280)
+    const illustration = illustrationRef.current
+    if (!illustration) return
+    let maxHeight = 280
+    let currentHeight = 280
+    const measure = () => {
+      const progress = maxHeight ? currentHeight / maxHeight : 1
+      maxHeight = Math.min(280, scroll.clientWidth * 0.8, scroll.clientHeight * 0.6)
+      currentHeight = Math.max(maxHeight * 0.5, maxHeight * progress)
+      illustration.style.height = `${currentHeight}px`
+    }
+    measure()
     scroll.scrollTop = 0
-    const consumeScroll = (delta: number) => {
-      const height = illustrationHeightRef.current
-      if (delta > 0 && height > 140) {
-        const overflow = scroll.scrollHeight - scroll.clientHeight
-        const change = Math.min(delta, overflow, height - 140)
-        if (change <= 0) return false
-        illustrationHeightRef.current = height - change
-      } else if (delta < 0 && height < 280 && scroll.scrollTop <= 0) {
-        illustrationHeightRef.current = Math.min(280, height - delta)
-      } else return false
-      setIllustrationHeight(illustrationHeightRef.current)
-      return true
+    const resizeObserver = new ResizeObserver(measure)
+    resizeObserver.observe(scroll)
+    const consumeScroll = (delta: number, managed = false) => {
+      const top = scroll.scrollTop
+      const overflow = Math.max(0, scroll.scrollHeight - scroll.clientHeight)
+      const minHeight = maxHeight * 0.5
+      if (delta > 0 && currentHeight > minHeight && overflow > 0) {
+        const shrink = Math.min(delta, currentHeight - minHeight, overflow)
+        currentHeight -= shrink
+        illustration.style.height = `${currentHeight}px`
+        scroll.scrollTop = top + delta - shrink
+        return true
+      }
+      if (delta < 0 && currentHeight < maxHeight && top + delta < 0) {
+        const expansion = Math.min(-(top + delta), maxHeight - currentHeight)
+        currentHeight += expansion
+        illustration.style.height = `${currentHeight}px`
+        scroll.scrollTop = 0
+        return true
+      }
+      if (managed) {
+        scroll.scrollTop = top + delta
+        return true
+      }
+      return false
     }
     const onWheel = (event: WheelEvent) => { if (consumeScroll(event.deltaY)) event.preventDefault() }
     let lastTouchY = 0
-    const onTouchStart = (event: TouchEvent) => { lastTouchY = event.touches[0]?.clientY ?? 0 }
+    let managedTouch = false
+    const onTouchStart = (event: TouchEvent) => { lastTouchY = event.touches[0]?.clientY ?? 0; managedTouch = false }
     const onTouchMove = (event: TouchEvent) => {
       const y = event.touches[0]?.clientY ?? lastTouchY
-      if (consumeScroll(lastTouchY - y)) event.preventDefault()
+      if (consumeScroll(lastTouchY - y, managedTouch)) { event.preventDefault(); managedTouch = true }
       lastTouchY = y
     }
     scroll.addEventListener('wheel', onWheel, { passive: false })
     scroll.addEventListener('touchstart', onTouchStart, { passive: true })
     scroll.addEventListener('touchmove', onTouchMove, { passive: false })
     return () => {
+      resizeObserver.disconnect()
       scroll.removeEventListener('wheel', onWheel)
       scroll.removeEventListener('touchstart', onTouchStart)
       scroll.removeEventListener('touchmove', onTouchMove)
     }
-  }, [card?.word])
+  }, [card?.word, view])
   useEffect(() => () => window.speechSynthesis?.cancel(), [])
   useEffect(() => {
     if (!menu) return
@@ -150,7 +173,7 @@ export default function App() {
   }
   return <main className="page-shell"><section className="phone" aria-label={t('单词图鉴', 'Word Atlas')}>
     <div className="content">
-      {view === 'atlas' && <div className="category-row"><div className="popover-anchor" data-popover-root><button className="category-btn" aria-expanded={menu === 'category'} onClick={() => setMenu(menu === 'category' ? null : 'category')}>{categoryLabel(category)} <ChevronDown size={16}/></button>{menu === 'category' && <div className="menu category-menu">{categories.map(([zh, en]) => <button key={zh} onClick={() => chooseCategory(zh)}>{hideChinese ? en : zh}</button>)}</div>}</div><button className="favourites" onClick={openSavedList}><Bookmark size={16} fill="currentColor"/> {t('收藏夹', 'Saved')} {saved.length} <ChevronRight size={13}/></button></div>}
+      {view === 'atlas' && <div className="category-row"><div className="popover-anchor" data-popover-root><button className="category-btn" aria-expanded={menu === 'category'} onClick={() => setMenu(menu === 'category' ? null : 'category')}>{categoryLabel(category)} <ChevronDown size={16}/></button>{menu === 'category' && <div className="menu category-menu">{categories.map(([zh, en]) => <button key={zh} onClick={() => chooseCategory(zh)}>{hideChinese ? en : zh}</button>)}</div>}</div><button className="favourites" onClick={openSavedList}><Bookmark className="favourites-icon" size={16} fill="currentColor"/><span>{t('收藏夹', 'Saved')} {saved.length}</span><ChevronRight size={13}/></button></div>}
       {view === 'saved-list' && <>
         <header className="subpage-header"><button className="subpage-back" onClick={backToAtlas} aria-label={t('返回单词图鉴', 'Back to Word Atlas')}><ChevronLeft size={22}/></button><h1>{t('收藏夹', 'Saved words')}</h1><span className="subpage-count">{savedCards.length}</span></header>
         {savedCards.length ? <div className="saved-list" aria-label={t('已收藏单词', 'Saved words')}>
@@ -165,7 +188,7 @@ export default function App() {
       {view !== 'saved-list' && (card ? <>
         <div className="card-scroll" ref={cardScrollRef}>
         <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${side * 100}%)`, opacity: 0 }), center: { transform: 'translateX(0)', opacity: 1 }, exit: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${-side * 100}%)`, opacity: 0 })}} transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}>
-          <div className="illustration" style={{ height: illustrationHeight }}>{card.image ? <img src={card.image} alt={t('手持宝剑的像素风玩家', 'Pixel art player with a sword')} /> : <div className="missing-image">{card.word}</div>}</div>
+          <div className="illustration" ref={illustrationRef}>{card.image ? <img src={card.image} alt={t('手持宝剑的像素风玩家', 'Pixel art player with a sword')} /> : <div className="missing-image">{card.word}</div>}</div>
           <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />

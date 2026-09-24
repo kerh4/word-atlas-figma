@@ -5,7 +5,5 @@
 .is-playing{box-shadow:0 0 0 5px #287f7033}
 @media(max-width:480px){
   .phone{min-height:0}
-  .content{overflow-y:auto;min-height:0}
-  .illustration{height:auto;aspect-ratio:5/4;flex-shrink:0}
-  .illustration img{width:80%;height:auto;aspect-ratio:1}
+  .content{min-height:0}
 }
