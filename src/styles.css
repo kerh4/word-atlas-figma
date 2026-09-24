@@ -68,7 +68,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
 .example p{font-size:18px;font-weight:400;line-height:23px;margin:0 0 6px}
 .example small{display:block;font-size:14px;line-height:1.5;color:#666}
 .spacer{flex:1 0 32px;min-height:32px}
-.toolbar{height:48px;min-height:48px;margin-top:20px;border-radius:14px;background:rgba(244,247,246,.78);padding:0 4px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;position:relative;z-index:2}
+.toolbar{height:48px;min-height:48px;margin-top:20px;border-radius:14px;background:#f4f7f6;padding:0 4px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;position:relative;z-index:2}
 .toolbar>.popover-anchor{min-width:0}
 .toolbar>button,.toolbar>.popover-anchor>button{font-size:13px;color:#666;height:40px;justify-content:center;width:100%;min-width:0;border-radius:10px;transition:background-color .16s ease,color .16s ease}
 .toolbar>button:active,.toolbar>.popover-anchor>button:active{background:#e3eee9}
@@ -131,7 +131,7 @@ button:focus-visible{outline:2px solid #82b7a9;outline-offset:2px}
   .word-row{height:auto;min-height:80px;padding-inline-end:4px;gap:16px}
   .word-row h2{overflow-wrap:anywhere}
   .spacer{display:none}
-  .study-backdrop{left:calc(50% + 0.5 * var(--study-footer-gap));right:0;height:calc(var(--study-footer-height) - var(--study-footer-gap))}
+  .study-backdrop{left:calc(50% + 0.5 * var(--study-footer-gap));right:0;height:var(--study-footer-height)}
   .toolbar,.pager{grid-column:2;z-index:2}
   .toolbar{grid-row:3}
   .pager{grid-row:4}
