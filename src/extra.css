@@ -1,0 +1,7 @@
+.missing-image{width:100%;height:100%;display:grid;place-items:center;color:#9baaa4;font-size:28px;font-weight:600;background:#f0f5f3}
+.empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#7a8983;gap:10px}
+.empty-state h2{font-size:18px;color:#242424;margin:4px 0 0}
+.empty-state p{font-size:14px;margin:0}
+.is-playing{box-shadow:0 0 0 5px #287f7033}
+.mini-island{position:relative;overflow:hidden;border:0}
+.mini-island img{position:absolute;width:136px;height:59px;max-width:none;left:-34.2px;top:-15.4px}
