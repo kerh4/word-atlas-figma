@@ -8,5 +8,4 @@
   .content{overflow-y:auto;min-height:0}
   .illustration{height:auto;aspect-ratio:5/4;flex-shrink:0}
   .illustration img{width:80%;height:auto;aspect-ratio:1}
-  .pager{position:sticky;bottom:0;background:white;z-index:2;padding-bottom:0}
 }
