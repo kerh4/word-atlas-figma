@@ -27,8 +27,8 @@ const categories = [
   ['村庄与生活', 'Village & Life'], ['创造与想象', 'Create & Imagine'],
 ] as const
 const knownWords = new Set(cards.map(card => card.word))
-const rates = [0.5, 0.8, 1, 1.25, 1.5]
-const speedNumber = (value: number) => value === 1.25 ? '1.25' : value.toFixed(1)
+const rates = [0.5, 0.8, 1, 1.1, 1.2]
+const speedNumber = (value: number) => value.toFixed(1)
 const speedLabel = (value: number) => `${speedNumber(value)}x`
 // Keep this query in sync with the split-layout rules in styles.css.
 const splitLayoutQuery = '(min-width: 900px), (min-width: 640px) and (max-height: 600px)'
@@ -57,6 +57,8 @@ export default function App() {
   const [saved, setSaved] = useState<string[]>(() => readSavedWords(knownWords))
   const [hideChinese, setHideChinese] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
+  const autoAdvanceRef = useRef(autoAdvance)
+  autoAdvanceRef.current = autoAdvance
   const [playing, setPlaying] = useState(false)
   const [paused, setPaused] = useState(false)
   const [speakingWord, setSpeakingWord] = useState(false)
@@ -257,13 +259,13 @@ export default function App() {
     setPaused(false)
     setSpeakingWord(false)
   }
-  const speak = (text: string, sentence = false) => {
+  const speak = (text: string, fromMainButton = false) => {
     if (!window.speechSynthesis) return
     stopAudio()
     const speech = new SpeechSynthesisUtterance(text)
     activeSpeech.current = speech
     setPlaying(true)
-    setSpeakingWord(!sentence)
+    setSpeakingWord(fromMainButton)
     speech.lang = 'en-US'
     speech.rate = rate
     speech.onend = () => {
@@ -272,7 +274,7 @@ export default function App() {
       setPlaying(false)
       setPaused(false)
       setSpeakingWord(false)
-      if (sentence && autoAdvance && index < visibleCards.length - 1) goTo(index + 1)
+      if (autoAdvanceRef.current && index < visibleCards.length - 1) goTo(index + 1)
     }
     speech.onerror = () => {
       if (activeSpeech.current !== speech) return
@@ -289,7 +291,7 @@ export default function App() {
       if (paused) window.speechSynthesis.resume()
       else window.speechSynthesis.pause()
       setPaused(!paused)
-    } else speak(card.word)
+    } else speak(`${card.word}. ${card.sentence}`, true)
   }
   const chooseCategory = (value: string) => { navigationRequest.current++; stopAudio(); setCategory(value); setView('atlas'); setIndex(0); setMenu(null) }
   const openSavedList = () => { navigationRequest.current++; stopAudio(); setAtlasIndex(index); setView('saved-list'); setMenu(null) }
@@ -334,7 +336,7 @@ export default function App() {
         <div className="card-scroll" ref={cardScrollRef}>
         <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ x: reduceMotion ? 0 : `${side * 100}%` }), center: { x: 0 }, exit: (side: number) => ({ x: reduceMotion ? 0 : `${-side * 100}%` })}} transition={{ duration: reduceMotion ? 0.01 : 0.46, ease: [0.4, 0, 0.2, 1] }} onAnimationComplete={animation => { if (animation === 'center') setPageTransitioning(false) }}>
           <div className="illustration-slot" ref={illustrationSlotRef}><div className="illustration">{card.image ? <img src={card.image} alt={t(`${card.word} 的像素风插画`, `Pixel art illustration of ${card.word}`)} decoding="sync" draggable={false} /> : <div className="missing-image">{card.word}</div>}</div></div>
-          <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
+          <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause reading') : t('朗读本页', 'Read this card')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
         </div>
