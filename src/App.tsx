@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Play, Star } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Bookmark, ChevronDown, ChevronLeft, ChevronRight, Pause, Play, Star } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 
 type Card = { word: string; phonetic: string; meaning: string; sentence: string; translation: string; category: string; image?: string }
@@ -29,6 +29,9 @@ export default function App() {
   const [hideChinese, setHideChinese] = useState(false)
   const [autoAdvance, setAutoAdvance] = useState(true)
   const [playing, setPlaying] = useState(false)
+  const [paused, setPaused] = useState(false)
+  const [speakingWord, setSpeakingWord] = useState(false)
+  const activeSpeech = useRef<SpeechSynthesisUtterance | null>(null)
   const reduceMotion = useReducedMotion()
   const visibleCards = savedView ? cards.filter(card => saved.includes(card.word)) : category === '基础词汇' ? cards : cards.filter(card => card.category === category)
   const card = visibleCards[index]
@@ -52,17 +55,46 @@ export default function App() {
       document.removeEventListener('keydown', closeOnEscape)
     }
   }, [menu])
-  const stopAudio = () => { window.speechSynthesis?.cancel(); setPlaying(false) }
+  const stopAudio = () => {
+    activeSpeech.current = null
+    window.speechSynthesis?.cancel()
+    setPlaying(false)
+    setPaused(false)
+    setSpeakingWord(false)
+  }
   const speak = (text: string, sentence = false) => {
     if (!window.speechSynthesis) return
     stopAudio()
     const speech = new SpeechSynthesisUtterance(text)
+    activeSpeech.current = speech
+    setPlaying(true)
+    setSpeakingWord(!sentence)
     speech.lang = 'en-US'
     speech.rate = rate
-    speech.onstart = () => setPlaying(true)
-    speech.onend = () => { setPlaying(false); if (sentence && autoAdvance) { setDirection(1); setIndex(i => Math.min(i + 1, visibleCards.length - 1)) } }
-    speech.onerror = () => setPlaying(false)
+    speech.onend = () => {
+      if (activeSpeech.current !== speech) return
+      activeSpeech.current = null
+      setPlaying(false)
+      setPaused(false)
+      setSpeakingWord(false)
+      if (sentence && autoAdvance) { setDirection(1); setIndex(i => Math.min(i + 1, visibleCards.length - 1)) }
+    }
+    speech.onerror = () => {
+      if (activeSpeech.current !== speech) return
+      activeSpeech.current = null
+      setPlaying(false)
+      setPaused(false)
+      setSpeakingWord(false)
+    }
     window.speechSynthesis.speak(speech)
+  }
+  const toggleWordPlayback = () => {
+    if (!card) return
+    if (playing && speakingWord) {
+      if (paused) window.speechSynthesis.resume()
+      else window.speechSynthesis.pause()
+      setPaused(!paused)
+    } else speak(card.word)
   }
   const chooseCategory = (value: string) => { stopAudio(); setCategory(value); setSavedView(false); setIndex(0); setMenu(null) }
   const goTo = (value: number) => { stopAudio(); setDirection(value > index ? 1 : -1); setIndex(value); setMenu(null) }
@@ -73,7 +105,7 @@ export default function App() {
       {card ? <>
         <div className="card-stage"><AnimatePresence initial={false} custom={direction} mode="popLayout"><motion.div className="card-body" key={card.word} custom={direction} initial="enter" animate="center" exit="exit" variants={{enter: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${side * 100}%)`, opacity: 0 }), center: { transform: 'translateX(0)', opacity: 1 }, exit: (side: number) => ({ transform: reduceMotion ? 'translateX(0)' : `translateX(${-side * 100}%)`, opacity: 0 })}} transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}>
           <div className="illustration">{card.image ? <img src={card.image} alt={t('手持宝剑的像素风玩家', 'Pixel art player with a sword')} /> : <div className="missing-image">{card.word}</div>}</div>
-          <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing ? 'play is-playing' : 'play'} aria-label={t('朗读单词', 'Pronounce word')} onClick={() => speak(card.word)}><Play size={28} fill="currentColor" /></button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
+          <section className="definition"><div className="word-row"><div><h2>{card.word}</h2><p className="phonetic">{card.phonetic}{!hideChinese && <><span>·</span>{card.meaning}</>}</p></div><button className={playing && speakingWord && !paused ? 'play is-playing' : 'play'} aria-label={playing && speakingWord && !paused ? t('暂停朗读', 'Pause pronunciation') : t('朗读单词', 'Pronounce word')} onClick={toggleWordPlayback}>{playing && speakingWord && !paused ? <Pause size={26} fill="currentColor" /> : <Play size={28} fill="currentColor" />}</button></div><button className="example" aria-label={t('朗读例句', 'Read example sentence')} onClick={() => speak(card.sentence, true)}><p>{card.sentence}</p>{!hideChinese && <small>{card.translation}</small>}</button></section>
         </motion.div></AnimatePresence></div>
         <div className="spacer" />
         <div className="toolbar"><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'speed'} onClick={() => setMenu(menu === 'speed' ? null : 'speed')}>{t('语速', 'Speed')} <span className="speed-display">{speedNumber(rate)}<span className="speed-times">×</span></span> <ChevronDown size={16}/></button>{menu === 'speed' && <div className="menu rate-menu">{rates.map(value => <button key={value} onClick={() => { setRate(value); setMenu(null) }}>{speedLabel(value)} {value === rate && <b className="selected-dot" aria-label={t('当前语速', 'Current speed')} />}</button>)}</div>}</div><button className={saved.includes(card.word) ? 'saved' : ''} onClick={toggleSaved}><Star size={16} fill={saved.includes(card.word) ? 'currentColor' : 'none'}/>{saved.includes(card.word) ? t('已收藏', 'Saved') : t('收藏', 'Save')}</button><div className="popover-anchor" data-popover-root><button aria-expanded={menu === 'more'} onClick={() => setMenu(menu === 'more' ? null : 'more')}>{t('更多', 'More')} <ChevronDown size={16}/></button>{menu === 'more' && <div className="menu more-menu"><label>{t('隐藏中文', 'Hide Chinese')} <input type="checkbox" checked={hideChinese} onChange={e => setHideChinese(e.target.checked)} /></label><label>{t('自动翻页', 'Auto advance')} <input type="checkbox" checked={autoAdvance} onChange={e => setAutoAdvance(e.target.checked)} /></label></div>}</div></div>

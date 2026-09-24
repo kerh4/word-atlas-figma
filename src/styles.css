@@ -18,7 +18,7 @@ body{margin:0}
 .illustration{height:280px;flex-shrink:0;border-radius:24px;background:#f9fbea;overflow:hidden;display:grid;place-items:center}
 .illustration img{width:280px;height:280px;object-fit:contain}
 .definition{padding-top:20px}
-.word-row{height:80px;display:flex;justify-content:space-between;align-items:center}
+.word-row{height:80px;display:flex;justify-content:space-between;align-items:center;padding-inline-end:8px}
 .word-row h2{font-family:"Arial Rounded MT Bold",Arial,sans-serif;font-weight:600;margin:0 0 6px;font-size:34px;line-height:43px;letter-spacing:-1.5px}
 .phonetic{margin:0;color:#666;font-size:14px;font-weight:400;line-height:17px}
 .phonetic span{margin:0 4px}
