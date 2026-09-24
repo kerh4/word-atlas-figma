@@ -7,16 +7,18 @@
 body{margin:0}
 .page-shell{min-height:100dvh;display:grid;place-items:center;padding:24px;position:relative}
 .phone{width:390px;height:min(844px,calc(100dvh - 48px));background:#fff;overflow:hidden;box-shadow:0 18px 50px #163e3724;position:relative;display:flex;flex-direction:column}
-.content{flex:1;min-height:0;padding:2px 20px 16px;display:flex;flex-direction:column;overflow-y:auto}
+.content{flex:1;min-height:0;padding:8px 20px 24px;display:flex;flex-direction:column;overflow:hidden}
 .category-row{height:44px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center}
 .category-btn,.favourites,.toolbar button{border:0;background:transparent;color:#242424;font-family:inherit;font-size:14px;font-weight:500;line-height:1.2;display:flex;align-items:center;gap:4px;cursor:pointer}
 .category-btn{font-size:16px;font-weight:600;padding:11px 8px 11px 0;min-height:44px;gap:8px}
-.favourites{font-size:14px}
+.favourites{font-size:14px;font-weight:400}
 .favourites svg{color:#287f70}
+.card-scroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;scrollbar-width:none}
+.card-scroll::-webkit-scrollbar{display:none}
 .card-stage{position:relative;flex-shrink:0;margin-top:8px;overflow:hidden}
 .card-body{width:100%}
 .illustration{height:280px;flex-shrink:0;border-radius:24px;background:#f9fbea;overflow:hidden;display:grid;place-items:center}
-.illustration img{width:280px;height:280px;object-fit:contain}
+.illustration img{width:100%;height:100%;object-fit:contain}
 .definition{padding-top:20px}
 .word-row{height:80px;display:flex;justify-content:space-between;align-items:center;padding-inline-end:8px}
 .word-row h2{font-family:"Arial Rounded MT Bold",Arial,sans-serif;font-weight:600;margin:0 0 6px;font-size:34px;line-height:43px;letter-spacing:-1.5px}
@@ -58,7 +60,7 @@ body{margin:0}
 @media(max-width:480px){
   .page-shell{padding:0;display:block}
   .phone{width:100vw;height:100dvh;min-height:0;box-shadow:none}
-  .content{padding-bottom:max(16px,env(safe-area-inset-bottom))}
+  .content{padding-bottom:max(24px,calc(env(safe-area-inset-bottom) + 8px))}
 }
 @media(max-width:360px){
   .pager button{font-size:14px;padding:0 2px}
